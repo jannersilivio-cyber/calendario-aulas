@@ -29,7 +29,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS AVANÇADO (REATIVANDO EFEITO VERDE NEON + HOVER INTERATIVO)
+# INJEÇÃO DE CSS REFINADO (FIX DO AZUL SAFIRA LOCAL + LARANJA)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -50,12 +50,11 @@ st.markdown("""
         padding-right: 0px !important;
     }
     
-    /* Garante que os containers ocupem 100% do espaço alinhado */
     div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
         width: 100% !important;
     }
 
-    /* ESTILO DO CABEÇALHO DA SEMANA (Botões Desativados Transparentes) */
+    /* ESTILO DO CABEÇALHO DA SEMANA */
     div.btn-cal-header button {
         background-color: transparent !important;
         color: #39ff14 !important;
@@ -71,7 +70,7 @@ st.markdown("""
         cursor: default !important;
     }
     
-    /* 🟢 SELETOR SUPREMO NEON: Força o Verde Neon nos botões com aula ignorando o cache do Streamlit */
+    /* 🟢 SELETOR NEON: Botões com aula */
     div.btn-cal-neon button, div.btn-cal-neon button[data-testid="baseButton-secondary"] {
         background-color: rgba(57, 255, 20, 0.08) !important;
         backdrop-filter: blur(8px) !important;
@@ -90,26 +89,23 @@ st.markdown("""
         flex-direction: column !important;
         justify-content: center !important;
         align-items: center !important;
-        
-        /* Brilho Neon Ativo (Glow verde) */
         box-shadow: 0 0 14px rgba(57, 255, 20, 0.3), inset 0 0 8px rgba(57, 255, 20, 0.1) !important;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
-    
-    /* 🔥 REATIVADO: Hover suave e acendimento neon ao passar o mouse nos cards ativos */
     div.btn-cal-neon button:hover, div.btn-cal-neon button[data-testid="baseButton-secondary"]:hover {
         background-color: rgba(57, 255, 20, 0.22) !important;
         border-color: #39ff14 !important;
         box-shadow: 0 0 24px rgba(57, 255, 20, 0.6), 0 0 34px rgba(57, 255, 20, 0.3) !important;
         transform: scale(1.04) !important;
-        color: #ffffff !important;
     }
 
-    /* ESTILO PARA OS BOTÕES EM DIAS VAZIOS (Data Grande + Vidro sutil) */
-    div.btn-cal-vazio button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
-        background-color: rgba(255, 255, 255, 0.02) !important;
-        color: #627267 !important;
-        border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    /* 🔵 CAPTURA LOCAL FORÇADA: DIAS VAZIOS (Efeito Vidro Azul Safira Elétrico) */
+    div.btn-cal-vazio button, div[class*="st-key-btn_vazio_"] button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
+        background-color: rgba(0, 150, 255, 0.12) !important; /* Fundo azul safira nítido */
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        color: #d1e6ff !important;
+        border: 1px solid rgba(0, 150, 255, 0.45) !important; /* Borda azul perceptível */
         border-radius: 8px !important;
         width: 100% !important;
         height: 75px !important;
@@ -118,17 +114,28 @@ st.markdown("""
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        box-shadow: none !important;
+        box-shadow: 0 0 8px rgba(0, 150, 255, 0.1) !important;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
-    
-    /* 🔥 REATIVADO: Hover suave e acendimento neon sutil ao passar o mouse nos dias vazios */
-    div.btn-cal-vazio button:hover, div.btn-cal-vazio button[data-testid="baseButton-secondary"]:hover {
-        background-color: rgba(57, 255, 20, 0.05) !important;
-        color: #a7f3d0 !important;
-        border-color: rgba(57, 255, 20, 0.2) !important;
-        box-shadow: 0 0 15px rgba(57, 255, 20, 0.2) !important;
+    div.btn-cal-vazio button:hover, div[class*="st-key-btn_vazio_"] button:hover {
+        background-color: rgba(0, 150, 255, 0.25) !important;
+        color: #ffffff !important;
+        border-color: #00ccff !important;
+        box-shadow: 0 0 22px rgba(0, 204, 255, 0.6) !important;
         transform: translateY(-2px) !important;
+    }
+    
+    /* 🟠 DESTAQUE CYBERPUNK: Caixa do Dia Selecionado no Painel de Ajustes */
+    .caixa-dia-foco {
+        background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
+        border: 1px solid #ff5e00 !important;
+        padding: 12px 18px !important;
+        border-radius: 8px !important;
+        color: #ff9900 !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        box-shadow: 0 0 15px rgba(255, 94, 0, 0.2) !important;
+        margin-bottom: 20px !important;
     }
     
     /* BLOCO DE MÉTRICAS DO TOPO */
@@ -141,22 +148,18 @@ st.markdown("""
         text-align: center;
     }
     
-    /* Botões normais do painel inferior (Ações) */
+    /* Botões do painel inferior */
     div.stButton > button {
         background-color: rgba(57, 255, 20, 0.05) !important;
         color: #39ff14 !important;
         border: 1px solid rgba(57, 255, 20, 0.4) !important;
         border-radius: 8px !important;
-        box-shadow: 0 0 8px rgba(57, 255, 20, 0.1) !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
         width: 100% !important;
     }
     div.stButton > button:hover {
         background-color: rgba(57, 255, 20, 0.18) !important;
         color: #ffffff !important;
         border-color: #39ff14 !important;
-        box-shadow: 0 0 18px rgba(57, 255, 20, 0.4) !important;
-        transform: translateY(-1px) !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -292,7 +295,7 @@ st.subheader("🛠️ Painel de Lançamento e Ajustes")
 
 if st.session_state.dia_selecionado is not None:
     dia_foco = st.session_state.dia_selecionado
-    st.info(f"📆 Dia selecionado no calendário: **{dia_foco} de {MESES_PT[mes]}**")
+    st.markdown(f"<div class='caixa-dia-foco'>📆 Dia selecionado no calendário: {dia_foco} de {MESES_PT[mes]}</div>", unsafe_allow_html=True)
     
     if dia_foco in aulas_por_dia:
         periodos_atuais = int(aulas_por_dia[dia_foco])
