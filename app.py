@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ESTRUTURA GERAL (AMBIENTE ESCURO)
+# INJEÇÃO SCRIPT BRINDADO: FORÇA VERDE NEON POR JAVASCRIPT DIRECT (ANTI-BLOCKED)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -45,13 +45,22 @@ st.markdown("""
     }
     [data-testid="stHorizontalBlock"] {
         gap: 10px !important;
-        padding-left: 0px !important;
-        padding-right: 0px !important;
+        padding: 0px !important;
     }
     
-    /* Remove margens extras dos blocos de textos acima dos botões */
-    div[data-testid="stMarkdownContainer"] p {
-        margin-bottom: 2px !important;
+    /* Base estrutural idêntica para todos os botões do calendário */
+    div.btn-cal-neon button, div.btn-cal-vazio button {
+        height: 75px !important;
+        width: 100% !important;
+        border-radius: 8px !important;
+        font-size: 18px !important;
+        white-space: pre-wrap !important;
+        line-height: 1.3 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        transition: all 0.2s ease-in-out !important;
     }
     
     .caixa-dia-foco {
@@ -68,6 +77,35 @@ st.markdown("""
         border-radius: 8px; padding: 14px; text-align: center;
     }
     </style>
+
+    <script>
+    // Script injetado para monitorar a renderização do Streamlit e aplicar o estilo Neon real por cima do tema padrão
+    const aplicarEstiloNeon = () => {
+        const divsNeon = window.parent.document.querySelectorAll('div.btn-cal-neon button');
+        divsNeon.forEach(btn => {
+            btn.style.setProperty('background-color', 'rgba(0, 255, 102, 0.25)', 'important');
+            btn.style.setProperty('color', '#ffffff', 'important');
+            btn.style.setProperty('border', '2.5px solid #00ff66', 'important');
+            btn.style.setProperty('box-shadow', '0 0 15px rgba(0, 255, 102, 0.6), inset 0 0 5px rgba(0, 255, 102, 0.2)', 'important');
+            btn.style.setProperty('font-weight', '900', 'important');
+        });
+
+        const divsVazio = window.parent.document.querySelectorAll('div.btn-cal-vazio button');
+        divsVazio.forEach(btn => {
+            btn.style.setProperty('background-color', 'rgba(255, 255, 255, 0.02)', 'important');
+            btn.style.setProperty('color', 'rgba(240, 253, 244, 0.35)', 'important');
+            btn.style.setProperty('border', '1px solid rgba(240, 253, 244, 0.12)', 'important');
+            btn.style.setProperty('box-shadow', 'none', 'important');
+            btn.style.setProperty('font-weight', 'normal', 'important');
+        });
+    };
+
+    // Monitor de mutações DOM para reaplicar o estilo dinamicamente
+    const observer = new MutationObserver(aplicarEstiloNeon);
+    observer.observe(window.parent.document.body, { childList: true, subtree: true });
+    window.parent.addEventListener('DOMContentLoaded', aplicarEstiloNeon);
+    aplicarEstiloNeon();
+    </script>
 """, unsafe_allow_html=True)
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
@@ -216,7 +254,7 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# CONTAGEM REAL POR DATA REAL
+# CONTAGEM REAL POR DATA REAL SOMA CONTROLADA
 aulas_por_dia = {}
 if not df_mes.empty:
     if coluna_quantidade in df_mes.columns:
@@ -247,17 +285,19 @@ for semana in semanas:
             if dia_num == 0:
                 st.write("")
             else:
-                # SE HOUVER AULA NO DIA: Injeta o card verde nativo (st.success) empilhado simetricamente
+                # SE HOUVER AULA NO DIA: Aplica o rótulo com quebra de linha nativa de períodos interna
                 if dia_num in aulas_por_dia:
                     qtd_pds = aulas_por_dia[dia_num]
-                    st.success(f"**{qtd_pds} pd**")
-                    if st.button(f"{dia_num:02d}", key=f"btn_dia_nativo_grade_{dia_num}_{mes}_{ano}", use_container_width=True):
-                        st.session_state.dia_selecionado = dia_num
+                    label_botao = f"{dia_num:02d}\n{qtd_pds} pd"
+                    classe_css = "btn-cal-neon"
                 else:
-                    # Dia sem período letivo: Mantém espaçador transparente sutil para não desalinhar a linha
-                    st.markdown("<p style='text-align:center; color:rgba(240,253,244,0.15); font-size:14px; margin-top:12px; margin-bottom:12px;'>⚪</p>", unsafe_allow_html=True)
-                    if st.button(f"{dia_num:02d}", key=f"btn_dia_nativo_grade_{dia_num}_{mes}_{ano}", use_container_width=True):
-                        st.session_state.dia_selecionado = dia_num
+                    label_botao = f"{dia_num:02d}"
+                    classe_css = "btn-cal-vazio"
+                
+                st.markdown(f"<div class='{classe_css}'>", unsafe_allow_html=True)
+                if st.button(label_botao, key=f"btn_dia_nativo_grade_{dia_num}_{mes}_{ano}", use_container_width=True):
+                    st.session_state.dia_selecionado = dia_num
+                st.markdown("</div>", unsafe_allow_html=True)
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 st.write("---")
