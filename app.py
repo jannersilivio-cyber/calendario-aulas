@@ -13,7 +13,7 @@ st.set_page_config(
 if "dia_selecionado" not in st.session_state:
     st.session_state.dia_selecionado = None
 if "mes_anterior" not in st.session_state:
-    st.session_state.mes_anterior = 10  # Outubro
+    st.session_state.mes_anterior = 10  # Outubro padrão
 if "ano_anterior" not in st.session_state:
     st.session_state.ano_anterior = 2026
 
@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE ULTRA NEON)
+# INJEÇÃO DE CSS DE ESTRUTURA GERAL (PROPORÇÃO E CORES PRESERVADAS)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -49,7 +49,7 @@ st.markdown("""
         padding-right: 0px !important;
     }
     
-    /* 🟢 SELETOR ALVO: Estiliza os botões com aula usando a palavra-chave injetada na KEY */
+    /* 🟢 DIAS COM AULA: Verde Neon Vibrante, proporção idêntica à imagem */
     div[data-testid="stMarkdownContainer"] + div button[id*="dia_neon"] {
         background-color: rgba(0, 255, 102, 0.25) !important;
         color: #ffffff !important;
@@ -66,7 +66,7 @@ st.markdown("""
         box-shadow: 0 0 25px #00ff66 !important;
     }
 
-    /* 🔵 SELETOR ALVO: Estiliza os botões vazios de forma simétrica */
+    /* 🔵 DIAS VAZIOS: Estrutura sutil, fosca e perfeitamente alinhada */
     div[data-testid="stMarkdownContainer"] + div button[id*="dia_vazio"] {
         background-color: rgba(255, 255, 255, 0.02) !important;
         color: rgba(240, 253, 244, 0.35) !important;
@@ -101,7 +101,7 @@ st.markdown("""
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
-# --- GESTÃO DE UPLOAD SEGURO ANTI-ACÚMULO ---
+# --- GESTÃO DE UPLOAD SEGURO ---
 with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela existente (Upload Excel)"):
     arquivo_updated = st.file_uploader("Arraste as novas aulas dadas aqui", type=["xlsx"])
     if arquivo_updated is not None:
@@ -159,7 +159,6 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
 
-# --- ANTI-TRAVAMENTO DOS FILTROS ---
 if not os.path.exists(excel_file):
     try:
         with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
@@ -230,6 +229,7 @@ st.markdown(f"""
         <tr>
             <td style='width:50%; border:none;'>
                 <div class='card-metrica-topo'>
+                    <span style='font-size:14px; color:#a7f3d0;'>Total no Mês ({MESES_PT[mes]})</span><br>
 # Interface de Métricas (Top) - Continuação do fechamento da tabela HTML
 """, unsafe_allow_html=True)
 
@@ -242,12 +242,11 @@ if not df_mes.empty:
         contagem_df = df_mes.groupby(df_mes["Data"].dt.day)[coluna_quantidade].sum().to_dict()
     else:
         contagem_df = df_mes.groupby(df_mes["Data"].dt.day).size().to_dict()
-        
     for d, total in contagem_df.items():
         if total > 0:
             aulas_por_dia[d] = int(total)
 
-# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO NATIVO (MÉTODO ULTRA NEON BLINDADO) ---
+# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO NATIVO ESTABILIZADO ---
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
 dias_semana_labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
@@ -255,7 +254,7 @@ dias_semana_labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 col_headers = st.columns(7)
 for c_idx, label in enumerate(dias_semana_labels):
     with col_headers[c_idx]:
-        st.markdown(f"<p style='text-align:center; font-weight:bold; color:#00ff66; margin:0;'>{label}</p>", unsafe_allow_html=True)
+        st.markdown(f"{label}", unsafe_allow_html=True)
 
 st.write("")
 
@@ -275,7 +274,6 @@ for semana in semanas:
                         st.rerun()
                 else:
                     label_botao = f"{dia_num:02d}"
-                    # Entra no seletor CSS Vazio fosco simétrico
                     if st.button(label_botao, key=f"dia_vazio_{dia_num}_{mes}_{ano}", use_container_width=True):
                         st.session_state.dia_selecionado = dia_num
                         st.rerun()
@@ -285,7 +283,7 @@ st.write("---")
 dia_escolhido = st.session_state.dia_selecionado
 
 if dia_escolhido is not None:
-    st.markdown(f"<div class='caixa-dia-foco'>⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}</div>", unsafe_allow_html=True)
+    st.markdown(f"⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}", unsafe_allow_html=True)
     data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_escolhido}")
     registro_existente = df_mes[df_mes["Data"] == data_alvo]
     
@@ -336,4 +334,4 @@ if dia_escolhido is not None:
             st.session_state.dia_selecionado = None
             st.rerun()
 else:
-    st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
+    st.sidebar.info("💡 Dica: Clique em qualquer quadrado numerado acima para gerenciar os dados.")
