@@ -223,6 +223,13 @@ if coluna_quantidade in df_mes.columns and not df_mes.empty:
 else:
     total_periodos_mes = len(df_mes)
 
+# Interface de Métricas (Top)
+st.markdown(f"""
+    <table style='width:100%; border:none; margin-bottom:20px;'>
+        <tr>
+            <td style='width:50%; border:none;'>
+                <div class='card-metrica-topo'>
+                    <span style='font-size:14px; color:#a7f3d0;'>Total no Mês ({MESES_PT[mes]})</span><br>
 # Interface de Métricas (Top) - Continuação do fechamento da tabela HTML
 """, unsafe_allow_html=True)
 
@@ -260,15 +267,13 @@ for semana in semanas:
             else:
                 if dia_num in aulas_por_dia:
                     qtd_pds = aulas_por_dia[dia_num]
-                    # Mantém a quebra de linha nativa
+                    # Texto com a quebra de linha nativa
                     label_botao = f"{dia_num:02d}\n{qtd_pds} pd"
-                    # Ajustado para casar exatamente com o seletor CSS do ID
                     if st.button(label_botao, key=f"dia_neon_{dia_num}_{mes}_{ano}", use_container_width=True):
                         st.session_state.dia_selecionado = dia_num
                         st.rerun()
                 else:
                     label_botao = f"{dia_num:02d}"
-                    # Ajustado para casar exatamente com o seletor CSS do ID
                     if st.button(label_botao, key=f"dia_vazio_{dia_num}_{mes}_{ano}", use_container_width=True):
                         st.session_state.dia_selecionado = dia_num
                         st.rerun()
@@ -330,4 +335,3 @@ if dia_escolhido is not None:
             st.rerun()
 else:
     st.sidebar.info("💡 Dica: Clique em qualquer quadrado numerado acima para gerenciar os dados.")
-
