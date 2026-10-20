@@ -171,7 +171,7 @@ disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", discipli
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=9) # Outubro
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=9) # Outubro padrão
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
@@ -220,7 +220,8 @@ st.markdown(f"""
     </table>
 """, unsafe_allow_html=True)
 
-st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
+# SOLICITAÇÃO ATENDIDA: Inclusão do Mês ativo diretamente ao lado do nome da Disciplina
+st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada} - {MESES_PT[mes]}")
 
 # CONTAGEM REAL POR DATA REAL
 aulas_por_dia = {}
@@ -235,10 +236,9 @@ if not df_mes.empty:
             aulas_por_dia[d] = int(total)
 
 # --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
-cal = calendar.Calendar(firstweekday=0)
-# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
-semanas = cal.monthdayscalendar(ano, mes)
 
+cal = calendar.Calendar(firstweekday=0)
+semanas = cal.monthdayscalendar(ano, mes)
 html_calendario = """
 <div style="background-color:#040805; padding:5px; border-radius:12px; font-family:sans-serif;">
     <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
@@ -294,15 +294,17 @@ html_calendario += """
 
 resposta_iframe = st.components.v1.html(html_calendario, height=450, scrolling=False)
 
-if resposta_iframe:
+# CORREÇÃO DO TRAVAMENTO BLINDADA: Só executa a conversão se o valor retornado não for vazio/nulo
+if resposta_iframe is not None and resposta_iframe != "":
     st.session_state.dia_selecionado = int(resposta_iframe)
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
+
 st.write("---")
 dia_escolhido = st.session_state.dia_selecionado
 
 if dia_escolhido is not None:
-    st.markdown(f"<div class='caixa-dia-foco'>⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}</div>", unsafe_allow_html=True)
+    st.markdown(f"⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}", unsafe_allow_html=True)
     data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_escolhido}")
     registro_existente = df_mes[df_mes["Data"] == data_alvo]
     
@@ -320,7 +322,6 @@ if dia_escolhido is not None:
     with col_b1:
         if st.button("💾 Salvar/Alterar Registro", key="btn_salvar_inf", use_container_width=True):
             df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
-            
             novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
             df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
             
@@ -334,12 +335,13 @@ if dia_escolhido is not None:
                         if 'Data' in df_carregada_outra.columns:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
-            st.success("✓ Registro atualizado!")
+            st.success("✓ Registro updated!")
             st.rerun()
             
     with col_b2:
         if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf", use_container_width=True):
             df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
+            
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
                 for nome_aba in turmas_disponiveis:
                     if nome_aba == turma_selecionada:
