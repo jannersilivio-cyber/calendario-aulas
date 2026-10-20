@@ -259,10 +259,13 @@ for semana in semanas:
         if dia_num == 0:
             html_calendario += '<div style="height: 75px;"></div>'
         else:
+            # JavaScript atualizado para atualizar os parâmetros da URL principal de forma estável
+            js_clique = f"window.top.location.href = window.top.location.origin + window.top.location.pathname + '?dia={dia_num}';"
+            
             if dia_num in aulas_por_dia:
                 qtd_pds = aulas_por_dia[dia_num]
                 html_calendario += f"""
-                <button onclick="window.parent.postMessage({{type: 'streamlit:set_component_value', value: {dia_num}}}, '*')"
+                <button onclick="{js_clique}"
                     style="height: 75px; background-color: rgba(0, 255, 102, 0.25); border: 2px solid #00ff66;
                     color: #ffffff; font-size: 19px; font-weight: 900; border-radius: 8px; cursor: pointer;
                     box-shadow: 0 0 15px rgba(0, 255, 102, 0.5), inset 0 0 5px rgba(0, 255, 102, 0.2); transition: 0.2s;">
@@ -271,7 +274,7 @@ for semana in semanas:
                 """
             else:
                 html_calendario += f"""
-                <button onclick="window.parent.postMessage({{type: 'streamlit:set_component_value', value: {dia_num}}}, '*')"
+                <button onclick="{js_clique}"
                     style="height: 75px; background-color: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(240, 253, 244, 0.12) !important;
                     color: rgba(240, 253, 244, 0.35) !important; font-size: 18px; font-weight: normal; border-radius: 8px; cursor: pointer; transition: 0.2s;">
                     {dia_num:02d}
@@ -283,16 +286,12 @@ html_calendario += """
 </div>
 """
 
-# Renderiza o visual sem travar variáveis nulas diretamente
+# Renderiza a grade do seu calendário na tela
 st.components.v1.html(html_calendario, height=450, scrolling=False)
 
-# Captura de segurança usando query_params dinâmicos ou mantendo o estado estático estável
-try:
-    params = st.query_params
-    if "dia" in params:
-        st.session_state.dia_selecionado = int(params["dia"])
-except:
-    pass
+# Captura de forma estável o clique que veio do botão através da URL
+if "dia" in st.query_params:
+    st.session_state.dia_selecionado = int(st.query_params["dia"])
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 
@@ -327,7 +326,10 @@ if dia_escolhido is not None:
                         if 'Data' in df_carregada_outra.columns:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
-            st.success("✓ Registro updated!")
+            
+            # Limpa o parâmetro da URL após salvar para resetar o estado de forma limpa
+            st.query_params.clear()
+            st.success("✓ Registro atualizado!")
             st.rerun()
     with col_b2:
         if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf", use_container_width=True):
@@ -342,8 +344,8 @@ if dia_escolhido is not None:
                         if 'Data' in df_carregada_outra.columns:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+            st.query_params.clear()
             st.session_state.dia_selecionado = None
             st.rerun()
 else:
     st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
-
