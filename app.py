@@ -13,7 +13,7 @@ st.set_page_config(
 if "dia_selecionado" not in st.session_state:
     st.session_state.dia_selecionado = None
 if "mes_anterior" not in st.session_state:
-    st.session_state.mes_anterior = 10  # Mantido padrão para Outubro conforme imagem
+    st.session_state.mes_anterior = 10  # Outubro
 if "ano_anterior" not in st.session_state:
     st.session_state.ano_anterior = 2026
 
@@ -110,6 +110,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+st.title("📅 Calendário Dinâmico de Aulas")
+st.markdown("Selecione os filtros na lateral. **Clique em qualquer dia do calendário** para carregar os dados diretamente no formulário abaixo.")
+
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
 # --- GESTÃO DE UPLOAD SEGURO ANTI-ACÚMULO ---
@@ -163,6 +166,17 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
             st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
+# --- ANTI-TRAVAMENTO: Se o arquivo Excel sumir, gera uma estrutura básica inicial ---
+if not os.path.exists(excel_file):
+    try:
+        with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+            df_inicial = pd.DataFrame(columns=["Data", "Disciplina", "Quantidade"])
+            # Injeta uma linha inicial de exemplo para o sistema carregar os filtros padrão
+            df_inicial.loc[0] = ["2026-10-19", "Biologia", 2]
+            df_inicial.to_excel(writer, sheet_name="103", index=False)
+    except:
+        pass
+
 # Bloco de segurança para abrir o arquivo integrado
 try:
     xls = pd.ExcelFile(excel_file)
@@ -177,7 +191,6 @@ turma_selecionada = st.sidebar.selectbox("Selecione a Turma", turmas_disponiveis
 
 df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
 
-# Normalização de nomes de colunas e textos para evitar erros de busca
 df_turma.columns = df_turma.columns.str.strip()
 if 'Disciplina' in df_turma.columns:
     df_turma['Disciplina'] = df_turma['Disciplina'].astype(str).str.strip()
@@ -185,15 +198,17 @@ if 'Disciplina' in df_turma.columns:
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
 df_turma.dropna(subset=["Data"], inplace=True)
 
-# Limpeza explícita de segurança contra datas de fins de semana (07/06)
 df_turma = df_turma[df_turma["Data"] != "2026-06-07"]
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
+# Garante uma disciplina padrão caso a tabela esteja totalmente vazia
+if not disciplinas:
+    disciplinas = ["Biologia"]
 disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", disciplinas)
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=9) # Mantido Outubro
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=9) # Outubro
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
@@ -202,15 +217,13 @@ if mes != st.session_state.mes_anterior or ano != st.session_state.ano_anterior:
     st.session_state.mes_anterior = mes
     st.session_state.ano_anterior = ano
 
-# Identifica se existe a coluna de Quantidade no arquivo de forma limpa
 coluna_quantidade = next((col for col in df_turma.columns if 'quant' in col.lower()), None)
 
-# --- FILTRAGEM CIRÚRGICA ISOLADA ---
+# --- FILTRAGEM E CÁLCULO SEGURO ---
 df_filtrado_disc = df_turma[df_turma["Disciplina"] == disciplina_selecionada]
 df_ano = df_filtrado_disc[df_filtrado_disc["Data"].dt.year == ano]
 
 if coluna_quantidade and not df_ano.empty:
-    # Garante a conversão para numérico antes de somar para evitar leituras erradas
     df_ano[coluna_quantidade] = pd.to_numeric(df_ano[coluna_quantidade], errors='coerce').fillna(0)
     total_periodos_ano = int(df_ano[coluna_quantidade].sum())
 else:
@@ -246,7 +259,7 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# CONTAGEM ISOLADA POR DATA REAL: Soma estritamente os valores válidos
+# CONTAGEM REAL POR DATA REAL
 aulas_por_dia = {}
 if not df_mes.empty:
     if coluna_quantidade:
@@ -270,16 +283,15 @@ for c_idx, label in enumerate(dias_semana_labels):
 
 st.write("") 
 
-for semana in semanas:
+for ... in semanas:
     cols_dias = st.columns(7)
-    for c_idx, dia_num in enumerate(semana):
+    for c_idx, dia_num in enumerate(...):
         with cols_dias[c_idx]:
             if dia_num == 0:
                 st.write("")
             else:
                 if dia_num in aulas_por_dia:
                     qtd_pds = aulas_por_dia[dia_num]
-                    # O visual verde neon e os períodos corretos retornam para o corpo do botão
                     label_botao = f"{dia_num:02d}\n{qtd_pds} pd"
                     classe_css = "btn-cal-neon"
                 else:
