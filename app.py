@@ -13,7 +13,7 @@ st.set_page_config(
 if "dia_selecionado" not in st.session_state:
     st.session_state.dia_selecionado = None
 if "mes_anterior" not in st.session_state:
-    st.session_state.mes_anterior = 10
+    st.session_state.mes_anterior = 3  # Ajustado padrão para Março conforme imagem
 if "ano_anterior" not in st.session_state:
     st.session_state.ano_anterior = 2026
 
@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (ESTRUTURA GERAL CYBERPUNK)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (VERDE ULTRA NEON)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -48,8 +48,45 @@ st.markdown("""
         padding-left: 0px !important;
         padding-right: 0px !important;
     }
+    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
+        width: 100% !important;
+    }
     
-    /* Caixa do Dia Selecionado no Painel de Lançamentos */
+    /* 🟢 DIAS COM AULA: Verde Neon Ativo com Quebra de Linha */
+    div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] {
+        background-color: rgba(0, 255, 102, 0.22) !important;
+        color: #ffffff !important;
+        border: 2px solid #00ff66 !important;
+        border-radius: 10px !important;
+        width: 100% !important;
+        height: 76px !important;
+        font-size: 20px !important;
+        font-weight: 900 !important;
+        box-shadow: 0 0 15px rgba(0, 255, 102, 0.5) !important;
+        white-space: pre-wrap !important;
+    }
+    div.btn-cal-neon button:hover {
+        background-color: rgba(0, 255, 102, 0.35) !important;
+        box-shadow: 0 0 25px #00ff66 !important;
+    }
+
+    /* 🔵 DIAS VAZIOS: Segundo plano apagado */
+    div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] {
+        background-color: rgba(255, 255, 255, 0.02) !important;
+        color: rgba(240, 253, 244, 0.35) !important;
+        border: 1px solid rgba(240, 253, 244, 0.12) !important;
+        border-radius: 8px !important;
+        width: 100% !important;
+        height: 75px !important;
+        font-size: 18px !important;
+        font-weight: normal !important;
+    }
+    div.btn-cal-vazio button:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
+        border-color: rgba(0, 255, 102, 0.4) !important;
+    }
+    
     .caixa-dia-foco {
         background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
         border: 1px solid #ff5e00 !important;
@@ -58,8 +95,6 @@ st.markdown("""
         color: #ff9900 !important;
         font-weight: bold;
     }
-    
-    /* Cards de Métricas do Topo */
     .card-metrica-topo {
         background-color: rgba(255, 255, 255, 0.02) !important;
         border: 1px solid rgba(0, 255, 102, 0.2) !important;
@@ -144,7 +179,7 @@ disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", discipli
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=5)
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=2) # Padrão definido para Março (Index 2)
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
@@ -153,13 +188,25 @@ if mes != st.session_state.mes_anterior or ano != st.session_state.ano_anterior:
     st.session_state.mes_anterior = mes
     st.session_state.ano_anterior = ano
 
+# Identifica de forma dinâmica se existe a coluna de Quantidade no arquivo
+coluna_quantidade = next((col for col in df_turma.columns if 'quant' in col.lower()), None)
+
 # --- FILTRAGEM E CÁLCULO SEGURO ---
 df_filtrado_disc = df_turma[df_turma["Disciplina"] == disciplina_selecionada]
 df_ano = df_filtrado_disc[df_filtrado_disc["Data"].dt.year == ano]
-total_periodos_ano = len(df_ano)
+
+# Totalização correta de períodos (Somando a coluna ou contando linhas)
+if coluna_quantidade and not df_ano.empty:
+    total_periodos_ano = int(df_ano[coluna_quantidade].sum())
+else:
+    total_periodos_ano = len(df_ano)
 
 df_mes = df_ano[df_ano["Data"].dt.month == mes]
-total_periodos_mes = len(df_mes)
+
+if coluna_quantidade and not df_mes.empty:
+    total_periodos_mes = int(df_mes[coluna_quantidade].sum())
+else:
+    total_periodos_mes = len(df_mes)
 
 # Interface de Métricas (Top)
 st.markdown(f"""
@@ -183,12 +230,16 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# CONTAGEM REAL POR REPETIÇÃO: Coleta a quantidade exata de períodos por data
+# CONTAGEM ATUALIZADA: Soma o valor real contido na coluna 'Quantidade'
 aulas_por_dia = {}
 if not df_mes.empty:
-    contagem_df = df_mes.groupby(df_mes["Data"].dt.day).size().to_dict()
+    if coluna_quantidade:
+        contagem_df = df_mes.groupby(df_mes["Data"].dt.day)[coluna_quantidade].sum().to_dict()
+    else:
+        contagem_df = df_mes.groupby(df_mes["Data"].dt.day).size().to_dict()
+        
     for d, total in contagem_df.items():
-        aulas_por_dia[d] = total
+        aulas_por_dia[d] = int(total)
 
 # --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO ---
 cal = calendar.Calendar(firstweekday=0)
@@ -209,15 +260,12 @@ for semana in semanas:
             if dia_num == 0:
                 st.write("")
             else:
-                # SE HOUVER AULA REGISTRADA NO DIA:
                 if dia_num in aulas_por_dia:
                     qtd_pds = aulas_por_dia[dia_num]
-                    # FIX DE LEITURA: Exibe o indicador aceso de períodos exatamente acima do botão
                     st.markdown(f"<p style='text-align:center; font-weight:bold; color:#00ff66; font-size:15px; margin:0;'>🟢 {qtd_pds} pd</p>", unsafe_allow_html=True)
                     if st.button(f"{dia_num:02d}", key=f"btn_dia_nativo_com_aula_{dia_num}_{mes}_{ano}", use_container_width=True):
                         st.session_state.dia_selecionado = dia_num
                 else:
-                    # Se o dia estiver vazio (sem períodos letivos):
                     st.markdown("<p style='text-align:center; color:rgba(240,253,244,0.15); font-size:15px; margin:0;'>⚪ Vazio</p>", unsafe_allow_html=True)
                     if st.button(f"{dia_num:02d}", key=f"btn_dia_nativo_vazio_{dia_num}_{mes}_{ano}", use_container_width=True):
                         st.session_state.dia_selecionado = dia_num
@@ -235,14 +283,23 @@ if dia_escolhido is not None:
     with col_f1:
         nova_disciplina = st.text_input("Disciplina do Lançamento", value=disciplina_selecionada)
     with col_f2:
-        periodos_sugeridos = int(len(registro_existente)) if not registro_existente.empty else 1
+        if coluna_quantidade and not registro_existente.empty:
+            periodos_sugeridos = int(registro_existente[coluna_quantidade].sum())
+        else:
+            periodos_sugeridos = int(len(registro_existente)) if not registro_existente.empty else 1
         num_periodos = st.number_input("Quantidade de Períodos", min_value=1, max_value=10, value=max(1, periodos_sugeridos))
         
     col_b1, col_b2 = st.columns(2)
     with col_b1:
         if st.button("💾 Salvar/Alterar Registro", key="btn_salvar_inf", use_container_width=True):
             df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
-            novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina} for _ in range(num_periodos)]
+            
+            # Cria a linha respeitando a estrutura de coluna encontrada na planilha
+            if coluna_quantidade:
+                novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
+            else:
+                novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina} for _ in range(num_periodos)]
+                
             df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
             
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
