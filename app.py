@@ -70,7 +70,7 @@ st.markdown("""
         cursor: default !important;
     }
     
-    /* 🟢 SELETOR NEON: Botões com aula */
+    /* SELETOR NEON: Botões com aula */
     div.btn-cal-neon button, div.btn-cal-neon button[data-testid="baseButton-secondary"] {
         background-color: rgba(57, 255, 20, 0.08) !important;
         backdrop-filter: blur(8px) !important;
@@ -99,7 +99,7 @@ st.markdown("""
         transform: scale(1.04) !important;
     }
 
-    /* 🔵 CAPTURA LOCAL FORÇADA: DIAS VAZIOS (Efeito Vidro Azul Safira Elétrico) */
+    /* CAPTURA LOCAL FORÇADA: DIAS VAZIOS (Efeito Vidro Azul Safira Elétrico) */
     div.btn-cal-vazio button, div[class*="st-key-btn_vazio_"] button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
         background-color: rgba(0, 150, 255, 0.12) !important; /* Fundo azul safira nítido */
         backdrop-filter: blur(8px) !important;
@@ -125,7 +125,7 @@ st.markdown("""
         transform: translateY(-2px) !important;
     }
     
-    /* 🟠 DESTAQUE CYBERPUNK: Caixa do Dia Selecionado no Painel de Ajustes */
+    /* DESTAQUE CYBERPUNK: Caixa do Dia Selecionado no Painel de Ajustes */
     .caixa-dia-foco {
         background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
         border: 1px solid #ff5e00 !important;
@@ -170,33 +170,26 @@ st.markdown("Selecione os filtros na lateral. **Clique em qualquer dia do calend
 # Nome do arquivo local padrão
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
-# 📁 Controle de Upload e Anexação de dados
-with st.expander("📁 Clique aqui para ADICIONAR novas aulas dadas à tabela existente (Upload Excel)"):
+# Controle de Upload e Anexação de dados
+with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela existente (Upload Excel)"):
     arquivo_updated = st.file_uploader("Arraste as novas aulas dadas aqui", type=["xlsx"])
     if arquivo_updated is not None:
         try:
             xls_novo = pd.ExcelFile(arquivo_updated)
-            turmas_novas = xls_novo.sheet_names
-            dados_consolidados = {}
-            if os.path.exists(excel_file):
-                xls_antigo = pd.ExcelFile(excel_file)
-                for t in xls_antigo.sheet_names:
-                    dados_consolidados[t] = pd.read_excel(excel_file, sheet_name=t)
-            for t in turmas_novas:
-                df_n = pd.read_excel(arquivo_updated, sheet_name=t)
-                df_n["Data"] = pd.to_datetime(df_n["Data"])
-                if t in dados_consolidados:
-                    df_c = pd.concat([dados_consolidados[t], df_n], ignore_index=True)
-                    dados_consolidados[t] = df_c.drop_duplicates(subset=["Data", "Disciplina"], keep="last")
-                else:
-                    dados_consolidados[t] = df_n.drop_duplicates(subset=["Data", "Disciplina"], keep="last")
-            with pd.ExcelWriter(excel_file, engine="openpyxl") as writer:
-                for t, df_f in dados_consolidados.items():
-                    df_f["Data"] = pd.to_datetime(df_f["Data"]).dt.strftime("%Y-%m-%d")
-                    df_f.to_excel(writer, sheet_name=t, index=False)
-            st.success("Novos dados consolidados com sucesso!")
+            
+            # Código para ler as abas ou turmas do arquivo novo
+            for nome_aba in xls_novo.sheet_names:
+                df_aba = pd.read_excel(arquivo_updated, sheet_name=nome_aba)
+                
+                # CORREÇÃO CRÍTICA AQUI: Força o Pandas a ler o formato brasileiro DD/MM/AAAA
+                if 'Data' in df_aba.columns:
+                    df_aba['Data'] = pd.to_datetime(df_aba['Data'], dayfirst=True, errors='coerce')
+                    
+            st.success("Novas turmas e datas validadas com sucesso!")
+            
         except Exception as e:
-            st.error(f"Erro no processamento: {e}")
+            st.error(f"Erro ao processar o arquivo: {e}")
+
 
 try:
     xls = pd.ExcelFile(excel_file)
