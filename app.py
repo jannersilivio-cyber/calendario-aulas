@@ -13,7 +13,7 @@ st.set_page_config(
 if "dia_selecionado" not in st.session_state:
     st.session_state.dia_selecionado = None
 if "mes_anterior" not in st.session_state:
-    st.session_state.mes_anterior = 3  # Padrão para Março conforme imagem
+    st.session_state.mes_anterior = 10  # Mantido padrão para Outubro conforme imagem
 if "ano_anterior" not in st.session_state:
     st.session_state.ano_anterior = 2026
 
@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE NEON SEGURO)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE ULTRA NEON)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -43,10 +43,13 @@ st.markdown("""
     h1, h2, h3, p, span, label {
         color: #f0fdf4 !important;
     }
-    
     [data-testid="stHorizontalBlock"] {
         gap: 10px !important;
-        padding: 0px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
+        width: 100% !important;
     }
     
     /* 🟢 DIAS COM PERÍODOS REGISTRADOS: Estilo Vidro Verde Neon */
@@ -60,7 +63,7 @@ st.markdown("""
         font-size: 20px !important;
         font-weight: 900 !important;
         box-shadow: 0 0 15px rgba(0, 255, 102, 0.5) !important;
-        white-space: pre-wrap !important; /* Permite a quebra de linha do pd */
+        white-space: pre-wrap !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
@@ -71,7 +74,7 @@ st.markdown("""
         box-shadow: 0 0 25px #00ff66 !important;
     }
 
-    /* 🔵 DIAS VAZIOS: Segundo plano fosco e sutil */
+    /* 🔵 DIAS VAZIOS: Segundo plano fosco sutil */
     div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
         background-color: rgba(255, 255, 255, 0.02) !important;
         color: rgba(240, 253, 244, 0.35) !important;
@@ -174,9 +177,13 @@ turma_selecionada = st.sidebar.selectbox("Selecione a Turma", turmas_disponiveis
 
 df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
 
-# BLINDAREI FILTRO ANTI-DATA FANTASMA: Converte e limpa nulos/textos na coluna de datas imediatamente
+# Normalização de nomes de colunas e textos para evitar erros de busca
+df_turma.columns = df_turma.columns.str.strip()
+if 'Disciplina' in df_turma.columns:
+    df_turma['Disciplina'] = df_turma['Disciplina'].astype(str).str.strip()
+
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
-df_turma = df_turma.dropna(subset=["Data"])
+df_turma.dropna(subset=["Data"], inplace=True)
 
 # Limpeza explícita de segurança contra datas de fins de semana (07/06)
 df_turma = df_turma[df_turma["Data"] != "2026-06-07"]
@@ -186,7 +193,7 @@ disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", discipli
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=2) # Março padrão
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=9) # Mantido Outubro
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
@@ -195,14 +202,16 @@ if mes != st.session_state.mes_anterior or ano != st.session_state.ano_anterior:
     st.session_state.mes_anterior = mes
     st.session_state.ano_anterior = ano
 
-# Identifica se existe a coluna de Quantidade no arquivo
+# Identifica se existe a coluna de Quantidade no arquivo de forma limpa
 coluna_quantidade = next((col for col in df_turma.columns if 'quant' in col.lower()), None)
 
-# --- FILTRAGEM E CÁLCULO SEGURO ---
+# --- FILTRAGEM CIRÚRGICA ISOLADA ---
 df_filtrado_disc = df_turma[df_turma["Disciplina"] == disciplina_selecionada]
 df_ano = df_filtrado_disc[df_filtrado_disc["Data"].dt.year == ano]
 
 if coluna_quantidade and not df_ano.empty:
+    # Garante a conversão para numérico antes de somar para evitar leituras erradas
+    df_ano[coluna_quantidade] = pd.to_numeric(df_ano[coluna_quantidade], errors='coerce').fillna(0)
     total_periodos_ano = int(df_ano[coluna_quantidade].sum())
 else:
     total_periodos_ano = len(df_ano)
@@ -210,6 +219,7 @@ else:
 df_mes = df_ano[df_ano["Data"].dt.month == mes]
 
 if coluna_quantidade and not df_mes.empty:
+    df_mes[coluna_quantidade] = pd.to_numeric(df_mes[coluna_quantidade], errors='coerce').fillna(0)
     total_periodos_mes = int(df_mes[coluna_quantidade].sum())
 else:
     total_periodos_mes = len(df_mes)
@@ -236,7 +246,7 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# CONTAGEM REAL POR REPETIÇÃO/SOMA: Coleta a quantidade exata mapeada para o dia
+# CONTAGEM ISOLADA POR DATA REAL: Soma estritamente os valores válidos
 aulas_por_dia = {}
 if not df_mes.empty:
     if coluna_quantidade:
@@ -245,7 +255,8 @@ if not df_mes.empty:
         contagem_df = df_mes.groupby(df_mes["Data"].dt.day).size().to_dict()
         
     for d, total in contagem_df.items():
-        aulas_por_dia[d] = int(total)
+        if total > 0:
+            aulas_por_dia[d] = int(total)
 
 # --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO ---
 cal = calendar.Calendar(firstweekday=0)
@@ -268,7 +279,7 @@ for semana in semanas:
             else:
                 if dia_num in aulas_por_dia:
                     qtd_pds = aulas_por_dia[dia_num]
-                    # Retorna com a escrita compactada dentro do botão Verde Neon estruturado pelo CSS
+                    # O visual verde neon e os períodos corretos retornam para o corpo do botão
                     label_botao = f"{dia_num:02d}\n{qtd_pds} pd"
                     classe_css = "btn-cal-neon"
                 else:
