@@ -33,32 +33,24 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE COM FORÇA REFORÇADA (ANTI-OVERRIDE)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE ULTRA NEON)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
-    /* Configuração de fundo escuro profundo */
     .stApp {
         background-color: #040805 !important;
     }
-    
-    /* Textos principais e títulos do sistema */
     h1, h2, h3, p, span, label {
         color: #f0fdf4 !important;
     }
-    
-    /* Grid de alinhamento perfeito para as colunas de dias da semana */
     [data-testid="stHorizontalBlock"] {
         gap: 8px !important;
         padding-left: 0px !important;
         padding-right: 0px !important;
     }
-    
     div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
         width: 100% !important;
     }
-
-    /* ESTILO DO CABEÇALHO DA SEMANA (VERDE BRILHANTE) */
     div.btn-cal-header button, div.btn-cal-header div[data-testid="stBaseButton-secondary"] button {
         background-color: transparent !important;
         color: #39ff14 !important;
@@ -73,15 +65,15 @@ st.markdown("""
         transform: none !important;
     }
     
-    /* 🟢 DIAS COM AULA: Super Destaque Vidro Verde Neon Forçado */
+    /* 🟢 DIAS COM AULA: Super Destaque Vidro Verde Neon */
     div.btn-cal-neon button, 
     div.btn-cal-neon div[data-testid="stBaseButton-secondary"] button,
     div.btn-cal-neon button[data-testid="baseButton-secondary"] {
-        background-color: rgba(57, 255, 20, 0.22) !important; /* Fundo denso aceso */
+        background-color: rgba(57, 255, 20, 0.22) !important;
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         color: #ffffff !important;
-        border: 2px solid #39ff14 !important; /* Borda acesa radioativa */
+        border: 2px solid #39ff14 !important;
         border-radius: 10px !important;
         width: 100% !important;
         height: 78px !important;
@@ -94,12 +86,9 @@ st.markdown("""
         flex-direction: column !important;
         justify-content: center !important;
         align-items: center !important;
-        /* Efeito de iluminação externa ativo */
         box-shadow: 0 0 20px rgba(57, 255, 20, 0.5), inset 0 0 10px rgba(57, 255, 20, 0.2) !important;
         transition: all 0.2s ease-in-out !important;
     }
-    
-    /* Hover dos botões com aula */
     div.btn-cal-neon button:hover,
     div.btn-cal-neon div[data-testid="stBaseButton-secondary"] button:hover {
         background-color: rgba(57, 255, 20, 0.40) !important;
@@ -112,11 +101,11 @@ st.markdown("""
     div.btn-cal-vazio button, 
     div.btn-cal-vazio div[data-testid="stBaseButton-secondary"] button,
     div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
-        background-color: rgba(0, 150, 255, 0.02) !important; /* Quase invisível */
+        background-color: rgba(0, 150, 255, 0.02) !important;
         backdrop-filter: blur(4px) !important;
         -webkit-backdrop-filter: blur(4px) !important;
-        color: rgba(209, 230, 255, 0.35) !important; /* Número fosco e apagado */
-        border: 1px solid rgba(0, 150, 255, 0.12) !important; /* Borda sutil */
+        color: rgba(209, 230, 255, 0.35) !important;
+        border: 1px solid rgba(0, 150, 255, 0.12) !important;
         border-radius: 8px !important;
         width: 100% !important;
         height: 75px !important;
@@ -128,8 +117,6 @@ st.markdown("""
         box-shadow: none !important;
         transition: all 0.2s ease-in-out !important;
     }
-    
-    /* Hover dos botões vazios */
     div.btn-cal-vazio button:hover,
     div.btn-cal-vazio div[data-testid="stBaseButton-secondary"] button:hover {
         background-color: rgba(0, 150, 255, 0.12) !important;
@@ -138,7 +125,6 @@ st.markdown("""
         box-shadow: 0 0 12px rgba(0, 204, 255, 0.2) !important;
     }
     
-    /* 🟠 PAINEL DE DIA SELECIONADO (Cyberpunk Laranja) */
     .caixa-dia-foco {
         background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
         border: 1px solid #ff5e00 !important;
@@ -150,8 +136,6 @@ st.markdown("""
         box-shadow: 0 0 15px rgba(255, 94, 0, 0.2) !important;
         margin-bottom: 20px !important;
     }
-    
-    /* CARDS DE MÉTRICAS DO TOPO */
     .card-metrica-topo {
         background-color: rgba(255, 255, 255, 0.02) !important;
         border: 1px solid rgba(57, 255, 20, 0.2) !important;
@@ -159,8 +143,6 @@ st.markdown("""
         padding: 14px;
         text-align: center;
     }
-    
-    /* Botões Padrão do Painel Inferior */
     div.stButton > button {
         background-color: rgba(57, 255, 20, 0.05) !important;
         color: #39ff14 !important;
@@ -174,9 +156,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-st.title("📅 Calendário Dinâmico de Aulas")
-st.markdown("Selecione os filtros na lateral. **Clique em qualquer dia do calendário** para carregar os dados diretamente no formulário abaixo.")
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
@@ -228,16 +207,6 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                 st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
-
-                st.rerun()
-        except Exception as e:
-            st.error(f"Erro ao salvar arquivo: {e}")
-
-
-# -------------------------------------------------------------
-# CONTINUAÇÃO DO CÓDIGO (COLE LOGO ABAIXO DA PARTE 1 NO MESMO ARQUIVO)
-# -------------------------------------------------------------
-
 # Bloco de segurança para abrir o arquivo integrado
 try:
     xls = pd.ExcelFile(excel_file)
@@ -363,7 +332,7 @@ if dia_escolhido is not None:
                         df_final_turma.to_excel(writer, sheet_name=nome_aba, index=False)
                     else:
                         pd.read_excel(excel_file, sheet_name=nome_aba).to_excel(writer, sheet_name=nome_aba, index=False)
-            st.success("✓ Registro atualizado!")
+            st.success("✓ Registro updated!")
             st.rerun()
             
     with col_b2:
@@ -372,6 +341,7 @@ if dia_escolhido is not None:
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
                 for nome_aba in turmas_disponiveis:
                     if nome_aba == turma_selecionada:
+                        df_restante["Data"] = pd.to_datetime(df_restante["Data"], errors='coerce')
                         df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
                         df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
                     else:
