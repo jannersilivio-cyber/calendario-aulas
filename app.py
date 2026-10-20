@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO SCRIPT BRINDADO: FORÇA VERDE NEON POR JAVASCRIPT DIRECT (ANTI-BLOCKED)
+# INJEÇÃO DE CSS DE ESTRUTURA GERAL (AMBIENTE ESCURO)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -45,24 +45,9 @@ st.markdown("""
     }
     [data-testid="stHorizontalBlock"] {
         gap: 10px !important;
-        padding: 0px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
     }
-    
-    /* Base estrutural idêntica para todos os botões do calendário */
-    div.btn-cal-neon button, div.btn-cal-vazio button {
-        height: 75px !important;
-        width: 100% !important;
-        border-radius: 8px !important;
-        font-size: 18px !important;
-        white-space: pre-wrap !important;
-        line-height: 1.3 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-        transition: all 0.2s ease-in-out !important;
-    }
-    
     .caixa-dia-foco {
         background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
         border: 1px solid #ff5e00 !important;
@@ -76,36 +61,18 @@ st.markdown("""
         border: 1px solid rgba(0, 255, 102, 0.2) !important;
         border-radius: 8px; padding: 14px; text-align: center;
     }
+    div.stButton > button {
+        background-color: rgba(0, 255, 102, 0.05) !important;
+        color: #00ff66 !important;
+        border: 1px solid rgba(0, 255, 102, 0.4) !important;
+        border-radius: 8px !important;
+        width: 100% !important;
+    }
+    div.stButton > button:hover {
+        background-color: rgba(0, 255, 102, 0.18) !important;
+        color: #ffffff !important;
+    }
     </style>
-
-    <script>
-    // Script injetado para monitorar a renderização do Streamlit e aplicar o estilo Neon real por cima do tema padrão
-    const aplicarEstiloNeon = () => {
-        const divsNeon = window.parent.document.querySelectorAll('div.btn-cal-neon button');
-        divsNeon.forEach(btn => {
-            btn.style.setProperty('background-color', 'rgba(0, 255, 102, 0.25)', 'important');
-            btn.style.setProperty('color', '#ffffff', 'important');
-            btn.style.setProperty('border', '2.5px solid #00ff66', 'important');
-            btn.style.setProperty('box-shadow', '0 0 15px rgba(0, 255, 102, 0.6), inset 0 0 5px rgba(0, 255, 102, 0.2)', 'important');
-            btn.style.setProperty('font-weight', '900', 'important');
-        });
-
-        const divsVazio = window.parent.document.querySelectorAll('div.btn-cal-vazio button');
-        divsVazio.forEach(btn => {
-            btn.style.setProperty('background-color', 'rgba(255, 255, 255, 0.02)', 'important');
-            btn.style.setProperty('color', 'rgba(240, 253, 244, 0.35)', 'important');
-            btn.style.setProperty('border', '1px solid rgba(240, 253, 244, 0.12)', 'important');
-            btn.style.setProperty('box-shadow', 'none', 'important');
-            btn.style.setProperty('font-weight', 'normal', 'important');
-        });
-    };
-
-    // Monitor de mutações DOM para reaplicar o estilo dinamicamente
-    const observer = new MutationObserver(aplicarEstiloNeon);
-    observer.observe(window.parent.document.body, { childList: true, subtree: true });
-    window.parent.addEventListener('DOMContentLoaded', aplicarEstiloNeon);
-    aplicarEstiloNeon();
-    </script>
 """, unsafe_allow_html=True)
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
@@ -254,7 +221,7 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# CONTAGEM REAL POR DATA REAL SOMA CONTROLADA
+# CONTAGEM REAL POR DATA REAL
 aulas_por_dia = {}
 if not df_mes.empty:
     if coluna_quantidade in df_mes.columns:
@@ -266,38 +233,72 @@ if not df_mes.empty:
         if total > 0:
             aulas_por_dia[d] = int(total)
 
-# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO ---
+# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
 
-dias_semana_labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-col_headers = st.columns(7)
-for c_idx, label in enumerate(dias_semana_labels):
-    with col_headers[c_idx]:
-        st.markdown(f"<p style='text-align:center; font-weight:bold; color:#00ff66; margin:0;'>{label}</p>", unsafe_allow_html=True)
-
-st.write("") 
+# Monta o calendário unificado em HTML puro para renderizar com as cores neon perfeitas
+html_calendario = """
+<div style="background-color:#040805; padding:5px; border-radius:12px; font-family:sans-serif;">
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Seg</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Ter</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qua</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qui</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sex</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sáb</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Dom</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
+"""
 
 for semana in semanas:
-    cols_dias = st.columns(7)
-    for c_idx, dia_num in enumerate(semana):
-        with cols_dias[c_idx]:
-            if dia_num == 0:
-                st.write("")
+    for dia_num in semana:
+        if dia_num == 0:
+            html_calendario += '<div style="height: 75px;"></div>'
+        else:
+            if dia_num in aulas_por_dia:
+                qtd_pds = aulas_por_dia[dia_num]
+                # Injeta o estilo VERDE NEON LEGÍTIMO com quebra de linha interna dentro do quadrado do botão
+                html_calendario += f"""
+                <button onclick="Streamlit.setComponentValue({dia_num})"
+                    style="height: 75px; background-color: rgba(0, 255, 102, 0.25); border: 2px solid #00ff66;
+                    color: #ffffff; font-size: 19px; font-weight: 900; border-radius: 8px; cursor: pointer;
+                    box-shadow: 0 0 15px rgba(0, 255, 102, 0.5), inset 0 0 5px rgba(0, 255, 102, 0.2); transition: 0.2s;">
+                    {dia_num:02d}<br><span style="font-size: 13px; color: #00ff66; font-weight: bold;">{qtd_pds} pd</span>
+                </button>
+                """
             else:
-                # SE HOUVER AULA NO DIA: Aplica o rótulo com quebra de linha nativa de períodos interna
-                if dia_num in aulas_por_dia:
-                    qtd_pds = aulas_por_dia[dia_num]
-                    label_botao = f"{dia_num:02d}\n{qtd_pds} pd"
-                    classe_css = "btn-cal-neon"
-                else:
-                    label_botao = f"{dia_num:02d}"
-                    classe_css = "btn-cal-vazio"
-                
-                st.markdown(f"<div class='{classe_css}'>", unsafe_allow_html=True)
-                if st.button(label_botao, key=f"btn_dia_nativo_grade_{dia_num}_{mes}_{ano}", use_container_width=True):
-                    st.session_state.dia_selecionado = dia_num
-                st.markdown("</div>", unsafe_allow_html=True)
+                # Dia vazio simétrico fosco apagado em segundo plano
+                html_calendario += f"""
+                <button onclick="Streamlit.setComponentValue({dia_num})"
+                    style="height: 75px; background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(240, 253, 244, 0.12);
+                    color: rgba(240, 253, 244, 0.35); font-size: 18px; font-weight: normal; border-radius: 8px; cursor: pointer; transition: 0.2s;">
+                    {dia_num:02d}
+                </button>
+                """
+
+html_calendario += """
+    </div>
+</div>
+<script>
+    // Envia o clique do componente de volta de forma estável para o Streamlit
+    const Streamlit = {
+        setComponentValue: function(value) {
+            window.parent.postMessage({
+                type: 'streamlit:set_component_value',
+                value: value
+            }, '*');
+        }
+    };
+</script>
+"""
+
+# Renderiza o calendário em bloco HTML estável integrado
+resposta_iframe = st.components.v1.html(html_calendario, height=450, scrolling=False)
+
+if resposta_iframe:
+    st.session_state.dia_selecionado = int(resposta_iframe)
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 st.write("---")
@@ -342,17 +343,17 @@ if dia_escolhido is not None:
     with col_b2:
         if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf", use_container_width=True):
             df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
-            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-                for nome_aba in turmas_disponiveis:
-                    if nome_aba == turma_selecionada:
-                        df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
-                        df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
-                    else:
-                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
-                        if 'Data' in df_carregada_outra.columns:
-                            df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
-                        df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
-            st.session_state.dia_selecionado = None
-            st.rerun()
+with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+for nome_aba in turmas_disponiveis:
+if nome_aba == turma_selecionada:
+df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
+df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
 else:
-    st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
+df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+if 'Data' in df_carregada_outra.columns:
+df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
+df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+st.session_state.dia_selecionado = None
+st.rerun()
+else:
+st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
