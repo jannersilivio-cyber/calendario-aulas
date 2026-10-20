@@ -230,63 +230,100 @@ st.markdown(f"""
             <td style='width:50%; border:none;'>
                 <div class='card-metrica-topo'>
                     <span style='font-size:14px; color:#a7f3d0;'>Total no Mês ({MESES_PT[mes]})</span><br>
-# Interface de Métricas (Top) - Continuação do fechamento da tabela HTML
+                    <span style='font-size:32px; font-weight:bold; color:#00ff66;'>{total_periodos_mes} pd</span>
+                </div>
+            </td>
+            <td style='width:50%; border:none;'>
+                <div class='card-metrica-topo'>
+                    <span style='font-size:14px; color:#a7f3d0;'>Total no Ano ({ano})</span><br>
+                    <span style='font-size:32px; font-weight:bold; color:#00ff66;'>{total_periodos_ano} pd</span>
+                </div>
+            </td>
+        </tr>
+    </table>
 """, unsafe_allow_html=True)
 
+# SOLICITAÇÃO ATENDIDA: Inclusão do Mês ativo diretamente ao lado do nome da Disciplina
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada} - {MESES_PT[mes]}")
 
-# --- CONTAGEM REAL POR DATA REAL ---
+# CONTAGEM REAL POR DATA REAL
 aulas_por_dia = {}
 if not df_mes.empty:
     if coluna_quantidade in df_mes.columns:
         contagem_df = df_mes.groupby(df_mes["Data"].dt.day)[coluna_quantidade].sum().to_dict()
     else:
         contagem_df = df_mes.groupby(df_mes["Data"].dt.day).size().to_dict()
+        
     for d, total in contagem_df.items():
         if total > 0:
             aulas_por_dia[d] = int(total)
 
-# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO NATIVO ESTABILIZADO ---
+# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
+
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
-dias_semana_labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 
-col_headers = st.columns(7)
-for c_idx, label in enumerate(dias_semana_labels):
-    with col_headers[c_idx]:
-        st.markdown(f"<p style='text-align:center; font-weight:bold; color:#00ff66; margin:0;'>{label}</p>", unsafe_allow_html=True)
-
-st.write("")
+html_calendario = """
+<div style="background-color:#040805; padding:5px; border-radius:12px; font-family:sans-serif;">
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Seg</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Ter</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qua</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qui</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sex</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sáb</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Dom</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
+"""
 
 for semana in semanas:
-    cols_dias = st.columns(7)
-    for c_idx, dia_num in enumerate(semana):
-        with cols_dias[c_idx]:
-            if dia_num == 0:
-                st.write("")
+    for dia_num in semana:
+        if dia_num == 0:
+            html_calendario += '<div style="height: 75px;"></div>'
+        else:
+            # JavaScript atualizado para atualizar os parâmetros da URL principal de forma estável
+            js_clique = f"window.top.location.href = window.top.location.origin + window.top.location.pathname + '?dia={dia_num}';"
+            
+            if dia_num in aulas_por_dia:
+                qtd_pds = aulas_por_dia[dia_num]
+                html_calendario += f"""
+                <button onclick="{js_clique}"
+                    style="height: 75px; background-color: rgba(0, 255, 102, 0.25); border: 2px solid #00ff66;
+                    color: #ffffff; font-size: 19px; font-weight: 900; border-radius: 8px; cursor: pointer;
+                    box-shadow: 0 0 15px rgba(0, 255, 102, 0.5), inset 0 0 5px rgba(0, 255, 102, 0.2); transition: 0.2s;">
+                    {dia_num:02d}<br><span style="font-size: 13px; color: #00ff66; font-weight: bold;">{qtd_pds} pd</span>
+                </button>
+                """
             else:
-                if dia_num in aulas_por_dia:
-                    qtd_pds = aulas_por_dia[dia_num]
-                    # Texto com a quebra de linha nativa
-                    label_botao = f"{dia_num:02d}\n{qtd_pds} pd"
-                    if st.button(label_botao, key=f"dia_neon_{dia_num}_{mes}_{ano}", use_container_width=True):
-                        st.session_state.dia_selecionado = dia_num
-                        st.rerun()
-                else:
-                    label_botao = f"{dia_num:02d}"
-                    if st.button(label_botao, key=f"dia_vazio_{dia_num}_{mes}_{ano}", use_container_width=True):
-                        st.session_state.dia_selecionado = dia_num
-                        st.rerun()
+                html_calendario += f"""
+                <button onclick="{js_clique}"
+                    style="height: 75px; background-color: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(240, 253, 244, 0.12) !important;
+                    color: rgba(240, 253, 244, 0.35) !important; font-size: 18px; font-weight: normal; border-radius: 8px; cursor: pointer; transition: 0.2s;">
+                    {dia_num:02d}
+                </button>
+                """
+
+html_calendario += """
+    </div>
+</div>
+"""
+
+# Renderiza a grade do seu calendário na tela
+st.components.v1.html(html_calendario, height=450, scrolling=False)
+
+# Captura de forma estável o clique que veio do botão através da URL
+if "dia" in st.query_params:
+    st.session_state.dia_selecionado = int(st.query_params["dia"])
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
+
 st.write("---")
 dia_escolhido = st.session_state.dia_selecionado
-
 if dia_escolhido is not None:
-    st.markdown(f"<div class='caixa-dia-foco'>⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}</div>", unsafe_allow_html=True)
+    st.markdown(f"⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}", unsafe_allow_html=True)
     data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_escolhido}")
     registro_existente = df_mes[df_mes["Data"] == data_alvo]
-    
     col_f1, col_f2 = st.columns(2)
     with col_f1:
         nova_disciplina = st.text_input("Disciplina do Lançamento", value=disciplina_selecionada)
@@ -296,14 +333,12 @@ if dia_escolhido is not None:
         else:
             periodos_sugeridos = int(len(registro_existente)) if not registro_existente.empty else 1
         num_periodos = st.number_input("Quantidade de Períodos", min_value=1, max_value=10, value=max(1, periodos_sugeridos))
-        
     col_b1, col_b2 = st.columns(2)
     with col_b1:
         if st.button("💾 Salvar/Alterar Registro", key="btn_salvar_inf", use_container_width=True):
             df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
             novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
             df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
-            
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
                 for nome_aba in turmas_disponiveis:
                     if nome_aba == turma_selecionada:
@@ -314,13 +349,14 @@ if dia_escolhido is not None:
                         if 'Data' in df_carregada_outra.columns:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+            
+            # Limpa o parâmetro da URL após salvar para resetar o estado de forma limpa
+            st.query_params.clear()
             st.success("✓ Registro atualizado!")
             st.rerun()
-            
     with col_b2:
         if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf", use_container_width=True):
             df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
-            
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
                 for nome_aba in turmas_disponiveis:
                     if nome_aba == turma_selecionada:
@@ -331,7 +367,8 @@ if dia_escolhido is not None:
                         if 'Data' in df_carregada_outra.columns:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+            st.query_params.clear()
             st.session_state.dia_selecionado = None
             st.rerun()
 else:
-    st.sidebar.info("💡 Dica: Clique em qualquer quadrado numerado acima para gerenciar os dados.")
+    st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
