@@ -237,7 +237,6 @@ if not df_mes.empty:
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
 
-# Monta o calendário unificado em HTML puro para renderizar com as cores neon perfeitas
 html_calendario = """
 <div style="background-color:#040805; padding:5px; border-radius:12px; font-family:sans-serif;">
     <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
@@ -259,7 +258,6 @@ for semana in semanas:
         else:
             if dia_num in aulas_por_dia:
                 qtd_pds = aulas_por_dia[dia_num]
-                # Injeta o estilo VERDE NEON LEGÍTIMO com quebra de linha interna dentro do quadrado do botão
                 html_calendario += f"""
                 <button onclick="Streamlit.setComponentValue({dia_num})"
                     style="height: 75px; background-color: rgba(0, 255, 102, 0.25); border: 2px solid #00ff66;
@@ -269,7 +267,6 @@ for semana in semanas:
                 </button>
                 """
             else:
-                # Dia vazio simétrico fosco apagado em segundo plano
                 html_calendario += f"""
                 <button onclick="Streamlit.setComponentValue({dia_num})"
                     style="height: 75px; background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(240, 253, 244, 0.12);
@@ -282,7 +279,6 @@ html_calendario += """
     </div>
 </div>
 <script>
-    // Envia o clique do componente de volta de forma estável para o Streamlit
     const Streamlit = {
         setComponentValue: function(value) {
             window.parent.postMessage({
@@ -294,7 +290,6 @@ html_calendario += """
 </script>
 """
 
-# Renderiza o calendário em bloco HTML estável integrado
 resposta_iframe = st.components.v1.html(html_calendario, height=450, scrolling=False)
 
 if resposta_iframe:
@@ -343,13 +338,13 @@ if dia_escolhido is not None:
     with col_b2:
         if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf", use_container_width=True):
             df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
-with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-for nome_aba in turmas_disponiveis:
-if nome_aba == turma_selecionada:
-df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
-df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
-else:
-df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                for nome_aba in turmas_disponiveis:
+                    if nome_aba == turma_selecionada:
+                        df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
+                        df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
+                    else:
+                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
 if 'Data' in df_carregada_outra.columns:
 df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
 df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
