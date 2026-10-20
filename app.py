@@ -262,7 +262,7 @@ for semana in semanas:
             if dia_num in aulas_por_dia:
                 qtd_pds = aulas_por_dia[dia_num]
                 html_calendario += f"""
-                <button onclick="Streamlit.setComponentValue({dia_num})"
+                <button onclick="window.parent.postMessage({{type: 'streamlit:set_component_value', value: {dia_num}}}, '*')"
                     style="height: 75px; background-color: rgba(0, 255, 102, 0.25); border: 2px solid #00ff66;
                     color: #ffffff; font-size: 19px; font-weight: 900; border-radius: 8px; cursor: pointer;
                     box-shadow: 0 0 15px rgba(0, 255, 102, 0.5), inset 0 0 5px rgba(0, 255, 102, 0.2); transition: 0.2s;">
@@ -271,7 +271,7 @@ for semana in semanas:
                 """
             else:
                 html_calendario += f"""
-                <button onclick="Streamlit.setComponentValue({dia_num})"
+                <button onclick="window.parent.postMessage({{type: 'streamlit:set_component_value', value: {dia_num}}}, '*')"
                     style="height: 75px; background-color: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(240, 253, 244, 0.12) !important;
                     color: rgba(240, 253, 244, 0.35) !important; font-size: 18px; font-weight: normal; border-radius: 8px; cursor: pointer; transition: 0.2s;">
                     {dia_num:02d}
@@ -281,23 +281,18 @@ for semana in semanas:
 html_calendario += """
     </div>
 </div>
-<script>
-    const Streamlit = {
-        setComponentValue: function(value) {
-            window.parent.postMessage({
-                type: 'streamlit:set_component_value',
-                value: value
-            }, '*');
-        }
-    };
-</script>
 """
 
-resposta_iframe = st.components.v1.html(html_calendario, height=450, scrolling=False)
+# Renderiza o visual sem travar variáveis nulas diretamente
+st.components.v1.html(html_calendario, height=450, scrolling=False)
 
-# CORREÇÃO DO TRAVAMENTO BLINDADA: Só executa a conversão se o valor retornado não for vazio/nulo
-if resposta_iframe is not None and resposta_iframe != "":
-    st.session_state.dia_selecionado = int(resposta_iframe)
+# Captura de segurança usando query_params dinâmicos ou mantendo o estado estático estável
+try:
+    params = st.query_params
+    if "dia" in params:
+        st.session_state.dia_selecionado = int(params["dia"])
+except:
+    pass
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 
@@ -351,5 +346,4 @@ if dia_escolhido is not None:
             st.rerun()
 else:
     st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
-
 
