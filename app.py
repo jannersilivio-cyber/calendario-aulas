@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE NEON SEGURO)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (VERDE ULTRA NEON)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -43,15 +43,17 @@ st.markdown("""
     h1, h2, h3, p, span, label {
         color: #f0fdf4 !important;
     }
-    
     [data-testid="stHorizontalBlock"] {
         gap: 10px !important;
         padding: 0px !important;
     }
+    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
+        width: 100% !important;
+    }
     
-    /* 🟢 ESTILO BLINDADO PARA DIAS COM PERÍODOS (VERDE NEON) */
+    /* 🟢 DIAS COM AULA: Verde Neon Ativo */
     div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] {
-        background-color: rgba(0, 255, 102, 0.25) !important;
+        background-color: rgba(0, 255, 102, 0.22) !important;
         color: #ffffff !important;
         border: 2px solid #00ff66 !important;
         border-radius: 10px !important;
@@ -63,11 +65,11 @@ st.markdown("""
         white-space: pre-wrap !important;
     }
     div.btn-cal-neon button:hover {
-        background-color: rgba(0, 255, 102, 0.4) !important;
+        background-color: rgba(0, 255, 102, 0.35) !important;
         box-shadow: 0 0 25px #00ff66 !important;
     }
 
-    /* 🔵 ESTILO APAGADO PARA DIAS SEM AULA */
+    /* 🔵 DIAS VAZIOS: Segundo plano apagado */
     div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] {
         background-color: rgba(255, 255, 255, 0.02) !important;
         color: rgba(240, 253, 244, 0.35) !important;
@@ -77,7 +79,6 @@ st.markdown("""
         height: 75px !important;
         font-size: 18px !important;
         font-weight: normal !important;
-        box-shadow: none !important;
     }
     div.btn-cal-vazio button:hover {
         background-color: rgba(255, 255, 255, 0.08) !important;
@@ -103,7 +104,7 @@ st.markdown("""
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
-# --- SISTEMA DE UPLOAD DE ABAS INTEGRADAS BLINDADO ---
+# --- G GESTÃO DE UPLOAD SEGURO ANTI-ACÚMULO ---
 with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela existente (Upload Excel)"):
     arquivo_updated = st.file_uploader("Arraste as novas aulas dadas aqui", type=["xlsx"])
     if arquivo_updated is not None:
@@ -131,23 +132,27 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                         df_antiga_aba = abas_finais[nome_aba]
                         df_antiga_aba['Data'] = pd.to_datetime(df_antiga_aba['Data'], dayfirst=True, errors='coerce')
                         
-                        # Concatena os períodos sem aplicar drop_duplicates para não forçar 1 período único
-                        df_unificado = pd.concat([df_antiga_aba, df_nova_aba], ignore_index=True)
+                        # Limpa registros antigos combinados para evitar o efeito "bola de neve"
+                        datas_novas = df_nova_aba['Data'].unique()
+                        disciplinas_novas = df_nova_aba['Disciplina'].unique() if 'Disciplina' in df_nova_aba.columns else []
+                        
+                        df_antiga_filtrada = df_antiga_aba[
+                            ~(df_antiga_aba['Data'].isin(datas_novas) & df_antiga_aba['Disciplina'].isin(disciplinas_novas))
+                        ]
+                        
+                        df_unificado = pd.concat([df_antiga_filtrada, df_nova_aba], ignore_index=True)
                         abas_finais[nome_aba] = df_unificado
                     else:
                         abas_finais[nome_aba] = df_nova_aba
 
-            if not abas_finais:
-                st.error("⚠️ O arquivo enviado não contém uma coluna válida chamada 'Data' ou está totalmente vazio.")
-            else:
-                with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-                    for nome_aba, df_gravar in abas_finais.items():
-                        df_gravar['Data'] = pd.to_datetime(df_gravar['Data'], errors='coerce')
-                        df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
-                        df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
-                        
-                st.success("✓ Dados salvos com sucesso! Todas as turmas foram integradas.")
-                st.rerun()
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                for nome_aba, df_gravar in abas_finais.items():
+                    df_gravar['Data'] = pd.to_datetime(df_gravar['Data'], errors='coerce')
+                    df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
+                    df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
+                    
+            st.success("✓ Dados consolidados de forma limpa!")
+            st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
 # Bloco de segurança para abrir o arquivo integrado
@@ -166,7 +171,7 @@ df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
 df_turma.dropna(subset=["Data"], inplace=True)
 
-# CORREÇÃO UNIFICADA: Remove o dia 07/06/2026 de todas as disciplinas por segurança
+# Limpeza explícita de segurança contra datas espúrias em fins de semana (07/06)
 df_turma = df_turma[df_turma["Data"] != "2026-06-07"]
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
@@ -174,7 +179,7 @@ disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", discipli
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=5) # Junho padrão
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=5)
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
@@ -183,7 +188,7 @@ if mes != st.session_state.mes_anterior or ano != st.session_state.ano_anterior:
     st.session_state.mes_anterior = mes
     st.session_state.ano_anterior = ano
 
-# --- PROCESSAMENTO DOS REGISTROS SEGUROS ---
+# --- FILTRAGEM E CÁLCULO SEGURO ---
 df_filtrado_disc = df_turma[df_turma["Disciplina"] == disciplina_selecionada]
 df_ano = df_filtrado_disc[df_filtrado_disc["Data"].dt.year == ano]
 total_periodos_ano = len(df_ano)
@@ -212,14 +217,13 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
-st.markdown(f"#### {MESES_PT[mes]} de {ano}")
 
-# Contagem exata por repetição de datas reais no arquivo
+# Contagem controlada das repetições reais por dia para evitar acúmulos incorretos
 aulas_por_dia = {}
-for idx, row in df_mes.iterrows():
-    if pd.notna(row["Data"]):
-        d = row["Data"].day
-        aulas_por_dia[d] = aulas_por_dia.get(d, 0) + 1
+if not df_mes.empty:
+    contagem_df = df_mes.groupby(df_mes["Data"].dt.day).size().to_dict()
+    for d, total in contagem_df.items():
+        aulas_por_dia[d] = total
 
 # --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO ---
 cal = calendar.Calendar(firstweekday=0)
