@@ -146,14 +146,17 @@ st.sidebar.header("Filtros")
 turma_selecionada = st.sidebar.selectbox("Selecione a Turma", turmas_disponiveis)
 
 df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
+
+# CORREÇÃO DO BUG: Converte e remove IMEDIATAMENTE qualquer linha sem data válida (NaT ou vazia)
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
+df_turma.dropna(subset=["Data"], inplace=True)
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
 disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", disciplinas)
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=9)
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=5) # Ajustado padrão para Junho (Index 5)
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
@@ -162,7 +165,7 @@ if mes != st.session_state.mes_anterior or ano != st.session_state.ano_anterior:
     st.session_state.mes_anterior = mes
     st.session_state.ano_anterior = ano
 
-# --- PROCESSAMENTO DOS REGISTROS ---
+# --- PROCESSAMENTO DOS REGISTROS SEGUROS ---
 df_filtrado_disc = df_turma[df_turma["Disciplina"] == disciplina_selecionada]
 df_ano = df_filtrado_disc[df_filtrado_disc["Data"].dt.year == ano]
 total_periodos_ano = len(df_ano)
@@ -203,14 +206,13 @@ for idx, row in df_mes.iterrows():
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
 
-# Cabeçalhos fixos dos dias da semana
 dias_semana_labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 col_headers = st.columns(7)
 for c_idx, label in enumerate(dias_semana_labels):
     with col_headers[c_idx]:
         st.markdown(f"<p style='text-align:center; font-weight:bold; color:#00ff66; margin:0;'>{label}</p>", unsafe_allow_html=True)
 
-st.write("") # Espaçador sutil
+st.write("") 
 
 for semana in semanas:
     cols_dias = st.columns(7)
@@ -219,7 +221,6 @@ for semana in semanas:
             if dia_num == 0:
                 st.write("")
             else:
-                # Se o dia possuir períodos de aula registrados, força o estilo Verde Neon Inline
                 if dia_num in aulas_por_dia:
                     qtd_aulas = aulas_por_dia[dia_num]
                     html_btn = f"""
@@ -232,13 +233,10 @@ for semana in semanas:
                         </button>
                     </div>
                     """
-                    # Renderiza o botão customizado injetado
                     st.components.v1.html(html_btn, height=85, scrolling=False)
-                    # Mantém uma escuta invisível para capturar o clique do botão injetado
                     if st.session_state.get(f"btn_link_{dia_num}"):
                         st.session_state.dia_selecionado = dia_num
                 else:
-                    # Dia sem período registrado: Estilo padrão apagado e fosco
                     label_botao = f"{dia_num:02d}"
                     if st.button(label_botao, key=f"btn_dia_vazio_{dia_num}_{mes}_{ano}"):
                         st.session_state.dia_selecionado = dia_num
