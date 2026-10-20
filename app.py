@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE NEON GARANTIDO)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE NEON SEGURO)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -49,6 +49,7 @@ st.markdown("""
         padding: 0px !important;
     }
     
+    /* 🟢 ESTILO BLINDADO PARA DIAS COM PERÍODOS (VERDE NEON) */
     div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] {
         background-color: rgba(0, 255, 102, 0.25) !important;
         color: #ffffff !important;
@@ -61,12 +62,12 @@ st.markdown("""
         box-shadow: 0 0 15px rgba(0, 255, 102, 0.5) !important;
         white-space: pre-wrap !important;
     }
-    
     div.btn-cal-neon button:hover {
         background-color: rgba(0, 255, 102, 0.4) !important;
         box-shadow: 0 0 25px #00ff66 !important;
     }
 
+    /* 🔵 ESTILO APAGADO PARA DIAS SEM AULA */
     div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] {
         background-color: rgba(255, 255, 255, 0.02) !important;
         color: rgba(240, 253, 244, 0.35) !important;
@@ -78,7 +79,6 @@ st.markdown("""
         font-weight: normal !important;
         box-shadow: none !important;
     }
-    
     div.btn-cal-vazio button:hover {
         background-color: rgba(255, 255, 255, 0.08) !important;
         color: #ffffff !important;
@@ -131,11 +131,10 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                         df_antiga_aba = abas_finais[nome_aba]
                         df_antiga_aba['Data'] = pd.to_datetime(df_antiga_aba['Data'], dayfirst=True, errors='coerce')
                         
+                        # Concatena os períodos sem aplicar drop_duplicates para não forçar 1 período único
                         df_unificado = pd.concat([df_antiga_aba, df_nova_aba], ignore_index=True)
-                        df_unificado.drop_duplicates(subset=['Data', 'Disciplina'], keep='last', inplace=True)
                         abas_finais[nome_aba] = df_unificado
                     else:
-                        df_nova_aba.drop_duplicates(subset=['Data', 'Disciplina'], keep='last', inplace=True)
                         abas_finais[nome_aba] = df_nova_aba
 
             if not abas_finais:
@@ -167,7 +166,7 @@ df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
 df_turma.dropna(subset=["Data"], inplace=True)
 
-# CORREÇÃO DEFINITIVA UNIFICADA: Remove o dia 07/06/2026 de TODAS as disciplinas desta turma
+# CORREÇÃO UNIFICADA: Remove o dia 07/06/2026 de todas as disciplinas por segurança
 df_turma = df_turma[df_turma["Data"] != "2026-06-07"]
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
@@ -215,13 +214,14 @@ st.markdown(f"""
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 st.markdown(f"#### {MESES_PT[mes]} de {ano}")
 
+# Contagem exata por repetição de datas reais no arquivo
 aulas_por_dia = {}
 for idx, row in df_mes.iterrows():
     if pd.notna(row["Data"]):
         d = row["Data"].day
         aulas_por_dia[d] = aulas_por_dia.get(d, 0) + 1
 
-# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO NATALINA STREAMLIT ---
+# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO ---
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
 
