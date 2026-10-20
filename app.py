@@ -151,6 +151,7 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                 st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
+
 # -------------------------------------------------------------
 # CONTINUAÇÃO DO CÓDIGO (COLE LOGO ABAIXO DA PARTE 1 NO MESMO ARQUIVO)
 # -------------------------------------------------------------
