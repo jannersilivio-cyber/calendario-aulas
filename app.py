@@ -170,9 +170,7 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
 if not os.path.exists(excel_file):
     try:
         with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-            df_inicial = pd.DataFrame(columns=["Data", "Disciplina", "Quantidade"])
-            # Injeta uma linha inicial de exemplo para o sistema carregar os filtros padrão
-            df_inicial.loc[0] = ["2026-10-19", "Biologia", 2]
+            df_inicial = pd.DataFrame([{"Data": "2026-10-19", "Disciplina": "Biologia", "Quantidade": 2}])
             df_inicial.to_excel(writer, sheet_name="103", index=False)
     except:
         pass
@@ -201,7 +199,6 @@ df_turma.dropna(subset=["Data"], inplace=True)
 df_turma = df_turma[df_turma["Data"] != "2026-06-07"]
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
-# Garante uma disciplina padrão caso a tabela esteja totalmente vazia
 if not disciplinas:
     disciplinas = ["Biologia"]
 disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", disciplinas)
@@ -283,9 +280,9 @@ for c_idx, label in enumerate(dias_semana_labels):
 
 st.write("") 
 
-for ... in semanas:
+for semana in semanas:
     cols_dias = st.columns(7)
-    for c_idx, dia_num in enumerate(...):
+    for c_idx, dia_num in enumerate(semana):
         with cols_dias[c_idx]:
             if dia_num == 0:
                 st.write("")
@@ -341,7 +338,7 @@ if dia_escolhido is not None:
                         df_final_turma.to_excel(writer, sheet_name=nome_aba, index=False)
                     else:
                         pd.read_excel(excel_file, sheet_name=nome_aba).to_excel(writer, sheet_name=nome_aba, index=False)
-            st.success("✓ Registro atualizado!")
+            st.success("✓ Registro updated!")
             st.rerun()
             
     with col_b2:
