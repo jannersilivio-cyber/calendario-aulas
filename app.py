@@ -90,7 +90,6 @@ st.markdown("""
     }
     div.btn-cal-vazio button:hover {
         background-color: rgba(255, 255, 255, 0.08) !important;
-        color: #ffffff !important;
         border-color: rgba(0, 255, 102, 0.4) !important;
     }
     
@@ -159,6 +158,13 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                 for nome_aba, df_gravar in abas_finais.items():
                     df_gravar['Data'] = pd.to_datetime(df_gravar['Data'], errors='coerce')
                     df_gravar = df_gravar.dropna(subset=['Data'])
+                    
+                    # Consolida agrupando para garantir uma linha única real por data e disciplina antes de salvar
+                    col_quant = next((c for c in df_gravar.columns if 'quant' in c.lower()), 'Quantidade')
+                    if col_quant in df_gravar.columns:
+                        df_gravar[col_quant] = pd.to_numeric(df_gravar[col_quant], errors='coerce').fillna(1)
+                        df_gravar = df_gravar.groupby(['Data', 'Disciplina'], as_index=False).agg({col_quant: 'sum'})
+                    
                     df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
                     df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
                     
@@ -214,13 +220,13 @@ if mes != st.session_state.mes_anterior or ano != st.session_state.ano_anterior:
     st.session_state.mes_anterior = mes
     st.session_state.ano_anterior = ano
 
-coluna_quantidade = next((col for col in df_turma.columns if 'quant' in col.lower()), None)
+coluna_quantidade = next((col for col in df_turma.columns if 'quant' in col.lower()), "Quantidade")
 
 # --- FILTRAGEM E CÁLCULO SEGURO ---
 df_filtrado_disc = df_turma[df_turma["Disciplina"] == disciplina_selecionada]
 df_ano = df_filtrado_disc[df_filtrado_disc["Data"].dt.year == ano]
 
-if coluna_quantidade and not df_ano.empty:
+if coluna_quantidade in df_ano.columns and not df_ano.empty:
     df_ano[coluna_quantidade] = pd.to_numeric(df_ano[coluna_quantidade], errors='coerce').fillna(0)
     total_periodos_ano = int(df_ano[coluna_quantidade].sum())
 else:
@@ -228,7 +234,7 @@ else:
 
 df_mes = df_ano[df_ano["Data"].dt.month == mes]
 
-if coluna_quantidade and not df_mes.empty:
+if coluna_quantidade in df_mes.columns and not df_mes.empty:
     df_mes[coluna_quantidade] = pd.to_numeric(df_mes[coluna_quantidade], errors='coerce').fillna(0)
     total_periodos_mes = int(df_mes[coluna_quantidade].sum())
 else:
@@ -256,10 +262,10 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# CONTAGEM REAL POR DATA REAL
+# CONTAGEM REAL POR DATA REAL SOMA CONTROLADA
 aulas_por_dia = {}
 if not df_mes.empty:
-    if coluna_quantidade:
+    if coluna_quantidade in df_mes.columns:
         contagem_df = df_mes.groupby(df_mes["Data"].dt.day)[coluna_quantidade].sum().to_dict()
     else:
         contagem_df = df_mes.groupby(df_mes["Data"].dt.day).size().to_dict()
@@ -313,7 +319,7 @@ if dia_escolhido is not None:
     with col_f1:
         nova_disciplina = st.text_input("Disciplina do Lançamento", value=disciplina_selecionada)
     with col_f2:
-        if coluna_quantidade and not registro_existente.empty:
+        if coluna_quantidade in registro_existente.columns and not registro_existente.empty:
             periodos_sugeridos = int(registro_existente[coluna_quantidade].sum())
         else:
             periodos_sugeridos = int(len(registro_existente)) if not registro_existente.empty else 1
@@ -324,11 +330,7 @@ if dia_escolhido is not None:
         if st.button("💾 Salvar/Alterar Registro", key="btn_salvar_inf", use_container_width=True):
             df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
             
-            if coluna_quantidade:
-                novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
-            else:
-                novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina} for _ in range(num_periodos)]
-                
+            novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
             df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
             
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
@@ -337,8 +339,11 @@ if dia_escolhido is not None:
                         df_final_turma["Data"] = df_final_turma["Data"].dt.strftime('%Y-%m-%d')
                         df_final_turma.to_excel(writer, sheet_name=nome_aba, index=False)
                     else:
-                        pd.read_excel(excel_file, sheet_name=nome_aba).to_excel(writer, sheet_name=nome_aba, index=False)
-            st.success("✓ Registro updated!")
+                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+                        if 'Data' in df_carregada_outra.columns:
+                            df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
+                        df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+            st.success("✓ Registro atualizado de forma limpa!")
             st.rerun()
             
     with col_b2:
@@ -347,11 +352,13 @@ if dia_escolhido is not None:
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
                 for nome_aba in turmas_disponiveis:
                     if nome_aba == turma_selecionada:
-                        df_restante["Data"] = pd.to_datetime(df_restante["Data"], errors='coerce')
                         df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
                         df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
                     else:
-                        pd.read_excel(excel_file, sheet_name=nome_aba).to_excel(writer, sheet_name=nome_aba, index=False)
+                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+                        if 'Data' in df_carregada_outra.columns:
+                            df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
+                        df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
             st.session_state.dia_selecionado = None
             st.rerun()
 else:
