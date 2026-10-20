@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE MÁXIMO PARA OS DIAS COM AULA)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE COM FORÇA REFORÇADA (ANTI-OVERRIDE)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -59,7 +59,7 @@ st.markdown("""
     }
 
     /* ESTILO DO CABEÇALHO DA SEMANA (VERDE BRILHANTE) */
-    div.btn-cal-header button {
+    div.btn-cal-header button, div.btn-cal-header div[data-testid="stBaseButton-secondary"] button {
         background-color: transparent !important;
         color: #39ff14 !important;
         border: none !important;
@@ -73,43 +73,50 @@ st.markdown("""
         transform: none !important;
     }
     
-    /* 🟢 DIAS COM AULA: Super Destaque Vidro Verde Neon */
-    div.btn-cal-neon button, div.btn-cal-neon button[data-testid="baseButton-secondary"] {
-        background-color: rgba(57, 255, 20, 0.18) !important; /* Fundo mais denso e visível */
+    /* 🟢 DIAS COM AULA: Super Destaque Vidro Verde Neon Forçado */
+    div.btn-cal-neon button, 
+    div.btn-cal-neon div[data-testid="stBaseButton-secondary"] button,
+    div.btn-cal-neon button[data-testid="baseButton-secondary"] {
+        background-color: rgba(57, 255, 20, 0.22) !important; /* Fundo denso aceso */
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         color: #ffffff !important;
-        border: 2px solid #39ff14 !important; /* Borda mais grossa e totalmente acesa */
+        border: 2px solid #39ff14 !important; /* Borda acesa radioativa */
         border-radius: 10px !important;
         width: 100% !important;
         height: 78px !important;
         padding: 4px 0px !important;
         font-size: 21px !important;
         line-height: 1.2 !important;
-        font-weight: 900 !important; /* Texto mais espesso */
+        font-weight: 900 !important;
         white-space: pre-wrap !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
         align-items: center !important;
-        /* Brilho externo expandido estilo Cyberpunk */
-        box-shadow: 0 0 20px rgba(57, 255, 20, 0.4), inset 0 0 10px rgba(57, 255, 20, 0.2) !important;
-        transition: all 0.3s ease-in-out !important;
+        /* Efeito de iluminação externa ativo */
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.5), inset 0 0 10px rgba(57, 255, 20, 0.2) !important;
+        transition: all 0.2s ease-in-out !important;
     }
-    div.btn-cal-neon button:hover, div.btn-cal-neon button[data-testid="baseButton-secondary"]:hover {
-        background-color: rgba(57, 255, 20, 0.35) !important;
+    
+    /* Hover dos botões com aula */
+    div.btn-cal-neon button:hover,
+    div.btn-cal-neon div[data-testid="stBaseButton-secondary"] button:hover {
+        background-color: rgba(57, 255, 20, 0.40) !important;
         border-color: #39ff14 !important;
-        box-shadow: 0 0 32px rgba(57, 255, 20, 0.8), 0 0 45px rgba(57, 255, 20, 0.4) !important;
+        box-shadow: 0 0 35px rgba(57, 255, 20, 0.9) !important;
         transform: scale(1.05) !important;
     }
 
-    /* 🔵 DIAS VAZIOS: Efeito Apagado/Segundo Plano (Contraste) */
-    div.btn-cal-vazio button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
-        background-color: rgba(0, 150, 255, 0.03) !important; /* Quase transparente */
+    /* 🔵 DIAS VAZIOS: Efeito Fosco Apagado em Segundo Plano */
+    div.btn-cal-vazio button, 
+    div.btn-cal-vazio div[data-testid="stBaseButton-secondary"] button,
+    div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
+        background-color: rgba(0, 150, 255, 0.02) !important; /* Quase invisível */
         backdrop-filter: blur(4px) !important;
         -webkit-backdrop-filter: blur(4px) !important;
-        color: rgba(209, 230, 255, 0.4) !important; /* Texto fosco/acinzentado */
-        border: 1px solid rgba(0, 150, 255, 0.15) !important; /* Borda bem suave */
+        color: rgba(209, 230, 255, 0.35) !important; /* Número fosco e apagado */
+        border: 1px solid rgba(0, 150, 255, 0.12) !important; /* Borda sutil */
         border-radius: 8px !important;
         width: 100% !important;
         height: 75px !important;
@@ -118,15 +125,17 @@ st.markdown("""
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        box-shadow: none !important; /* Sem brilho nenhum */
-        transition: all 0.3s ease-in-out !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease-in-out !important;
     }
-    div.btn-cal-vazio button:hover, div.btn-cal-vazio button[data-testid="baseButton-secondary"]:hover {
-        background-color: rgba(0, 150, 255, 0.15) !important;
+    
+    /* Hover dos botões vazios */
+    div.btn-cal-vazio button:hover,
+    div.btn-cal-vazio div[data-testid="stBaseButton-secondary"] button:hover {
+        background-color: rgba(0, 150, 255, 0.12) !important;
         color: #ffffff !important;
-        border-color: rgba(0, 204, 255, 0.6) !important;
-        box-shadow: 0 0 15px rgba(0, 204, 255, 0.3) !important;
-        transform: translateY(-1px) !important;
+        border-color: rgba(0, 204, 255, 0.5) !important;
+        box-shadow: 0 0 12px rgba(0, 204, 255, 0.2) !important;
     }
     
     /* 🟠 PAINEL DE DIA SELECIONADO (Cyberpunk Laranja) */
@@ -162,7 +171,6 @@ st.markdown("""
     div.stButton > button:hover {
         background-color: rgba(57, 255, 20, 0.18) !important;
         color: #ffffff !important;
-        border-color: #39ff14 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -217,6 +225,10 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                         df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
                         
                 st.success("✓ Dados salvos com sucesso! Todas as turmas foram integradas.")
+                st.rerun()
+        except Exception as e:
+            st.error(f"Erro ao salvar arquivo: {e}")
+
                 st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
