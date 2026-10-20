@@ -13,7 +13,7 @@ st.set_page_config(
 if "dia_selecionado" not in st.session_state:
     st.session_state.dia_selecionado = None
 if "mes_anterior" not in st.session_state:
-    st.session_state.mes_anterior = 3  # Ajustado padrão para Março conforme imagem
+    st.session_state.mes_anterior = 3  # Padrão para Março conforme imagem
 if "ano_anterior" not in st.session_state:
     st.session_state.ano_anterior = 2026
 
@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (VERDE ULTRA NEON)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE NEON SEGURO)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -43,17 +43,14 @@ st.markdown("""
     h1, h2, h3, p, span, label {
         color: #f0fdf4 !important;
     }
+    
     [data-testid="stHorizontalBlock"] {
         gap: 10px !important;
-        padding-left: 0px !important;
-        padding-right: 0px !important;
-    }
-    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
-        width: 100% !important;
+        padding: 0px !important;
     }
     
-    /* 🟢 DIAS COM AULA: Verde Neon Ativo com Quebra de Linha */
-    div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] {
+    /* 🟢 DIAS COM PERÍODOS REGISTRADOS: Estilo Vidro Verde Neon */
+    div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] button, div.btn-cal-neon button[data-testid="baseButton-secondary"] {
         background-color: rgba(0, 255, 102, 0.22) !important;
         color: #ffffff !important;
         border: 2px solid #00ff66 !important;
@@ -63,15 +60,19 @@ st.markdown("""
         font-size: 20px !important;
         font-weight: 900 !important;
         box-shadow: 0 0 15px rgba(0, 255, 102, 0.5) !important;
-        white-space: pre-wrap !important;
+        white-space: pre-wrap !important; /* Permite a quebra de linha do pd */
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
     div.btn-cal-neon button:hover {
         background-color: rgba(0, 255, 102, 0.35) !important;
         box-shadow: 0 0 25px #00ff66 !important;
     }
 
-    /* 🔵 DIAS VAZIOS: Segundo plano apagado */
-    div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] {
+    /* 🔵 DIAS VAZIOS: Segundo plano fosco e sutil */
+    div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
         background-color: rgba(255, 255, 255, 0.02) !important;
         color: rgba(240, 253, 244, 0.35) !important;
         border: 1px solid rgba(240, 253, 244, 0.12) !important;
@@ -80,6 +81,9 @@ st.markdown("""
         height: 75px !important;
         font-size: 18px !important;
         font-weight: normal !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
     div.btn-cal-vazio button:hover {
         background-color: rgba(255, 255, 255, 0.08) !important;
@@ -148,6 +152,7 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
                 for nome_aba, df_gravar in abas_finais.items():
                     df_gravar['Data'] = pd.to_datetime(df_gravar['Data'], errors='coerce')
+                    df_gravar = df_gravar.dropna(subset=['Data'])
                     df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
                     df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
                     
@@ -168,8 +173,10 @@ st.sidebar.header("Filtros")
 turma_selecionada = st.sidebar.selectbox("Selecione a Turma", turmas_disponiveis)
 
 df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
+
+# BLINDAREI FILTRO ANTI-DATA FANTASMA: Converte e limpa nulos/textos na coluna de datas imediatamente
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
-df_turma.dropna(subset=["Data"], inplace=True)
+df_turma = df_turma.dropna(subset=["Data"])
 
 # Limpeza explícita de segurança contra datas de fins de semana (07/06)
 df_turma = df_turma[df_turma["Data"] != "2026-06-07"]
@@ -179,7 +186,7 @@ disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", discipli
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=2) # Padrão definido para Março (Index 2)
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=2) # Março padrão
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
@@ -188,14 +195,13 @@ if mes != st.session_state.mes_anterior or ano != st.session_state.ano_anterior:
     st.session_state.mes_anterior = mes
     st.session_state.ano_anterior = ano
 
-# Identifica de forma dinâmica se existe a coluna de Quantidade no arquivo
+# Identifica se existe a coluna de Quantidade no arquivo
 coluna_quantidade = next((col for col in df_turma.columns if 'quant' in col.lower()), None)
 
 # --- FILTRAGEM E CÁLCULO SEGURO ---
 df_filtrado_disc = df_turma[df_turma["Disciplina"] == disciplina_selecionada]
 df_ano = df_filtrado_disc[df_filtrado_disc["Data"].dt.year == ano]
 
-# Totalização correta de períodos (Somando a coluna ou contando linhas)
 if coluna_quantidade and not df_ano.empty:
     total_periodos_ano = int(df_ano[coluna_quantidade].sum())
 else:
@@ -230,7 +236,7 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# CONTAGEM ATUALIZADA: Soma o valor real contido na coluna 'Quantidade'
+# CONTAGEM REAL POR REPETIÇÃO/SOMA: Coleta a quantidade exata mapeada para o dia
 aulas_por_dia = {}
 if not df_mes.empty:
     if coluna_quantidade:
@@ -262,13 +268,17 @@ for semana in semanas:
             else:
                 if dia_num in aulas_por_dia:
                     qtd_pds = aulas_por_dia[dia_num]
-                    st.markdown(f"<p style='text-align:center; font-weight:bold; color:#00ff66; font-size:15px; margin:0;'>🟢 {qtd_pds} pd</p>", unsafe_allow_html=True)
-                    if st.button(f"{dia_num:02d}", key=f"btn_dia_nativo_com_aula_{dia_num}_{mes}_{ano}", use_container_width=True):
-                        st.session_state.dia_selecionado = dia_num
+                    # Retorna com a escrita compactada dentro do botão Verde Neon estruturado pelo CSS
+                    label_botao = f"{dia_num:02d}\n{qtd_pds} pd"
+                    classe_css = "btn-cal-neon"
                 else:
-                    st.markdown("<p style='text-align:center; color:rgba(240,253,244,0.15); font-size:15px; margin:0;'>⚪ Vazio</p>", unsafe_allow_html=True)
-                    if st.button(f"{dia_num:02d}", key=f"btn_dia_nativo_vazio_{dia_num}_{mes}_{ano}", use_container_width=True):
-                        st.session_state.dia_selecionado = dia_num
+                    label_botao = f"{dia_num:02d}"
+                    classe_css = "btn-cal-vazio"
+                
+                st.markdown(f"<div class='{classe_css}'>", unsafe_allow_html=True)
+                if st.button(label_botao, key=f"btn_dia_nativo_grade_{dia_num}_{mes}_{ano}", use_container_width=True):
+                    st.session_state.dia_selecionado = dia_num
+                st.markdown("</div>", unsafe_allow_html=True)
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 st.write("---")
@@ -294,7 +304,6 @@ if dia_escolhido is not None:
         if st.button("💾 Salvar/Alterar Registro", key="btn_salvar_inf", use_container_width=True):
             df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
             
-            # Cria a linha respeitando a estrutura de coluna encontrada na planilha
             if coluna_quantidade:
                 novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
             else:
