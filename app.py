@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE NEON INTENSO)
+# INJEÇÃO DE CSS DE ESTRUTURA GERAL (FUNDO ESCURO E BARRA LATERAL)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -48,87 +48,6 @@ st.markdown("""
         padding-left: 0px !important;
         padding-right: 0px !important;
     }
-    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
-        width: 100% !important;
-    }
-    div.btn-cal-header button, div.btn-cal-header div[data-testid="stBaseButton-secondary"] button {
-        background-color: transparent !important;
-        color: #00ff66 !important;
-        border: none !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
-        height: 45px !important;
-        width: 100% !important;
-        text-align: center !important;
-        cursor: default !important;
-        box-shadow: none !important;
-        transform: none !important;
-    }
-    
-    /* 🟢 DIAS COM AULA: Destaque Máximo Verde Neon Elétrico */
-    div.btn-cal-neon button, 
-    div.btn-cal-neon div[data-testid="stBaseButton-secondary"] button,
-    div.btn-cal-neon button[data-testid="baseButton-secondary"] {
-        background-color: rgba(0, 255, 102, 0.28) !important; /* Fundo verde nítido e aceso */
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
-        color: #ffffff !important;
-        border: 2.5px solid #00ff66 !important; /* Borda verde grossa e radioativa */
-        border-radius: 10px !important;
-        width: 100% !important;
-        height: 78px !important;
-        padding: 4px 0px !important;
-        font-size: 22px !important;
-        line-height: 1.2 !important;
-        font-weight: 900 !important;
-        white-space: pre-wrap !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-        /* Efeito de iluminação externa ativa expandida */
-        box-shadow: 0 0 25px rgba(0, 255, 102, 0.6), inset 0 0 12px rgba(0, 255, 102, 0.3) !important;
-        transition: all 0.2s ease-in-out !important;
-        text-shadow: 0 0 5px rgba(0, 255, 102, 0.8) !important;
-    }
-    
-    /* Hover dos botões com período registrado */
-    div.btn-cal-neon button:hover,
-    div.btn-cal-neon div[data-testid="stBaseButton-secondary"] button:hover {
-        background-color: rgba(0, 255, 102, 0.45) !important;
-        border-color: #00ff66 !important;
-        box-shadow: 0 0 40px rgba(0, 255, 102, 0.9) !important;
-        transform: scale(1.05) !important;
-    }
-
-    /* 🔵 DIAS VAZIOS: Efeito Fosco em Segundo Plano (Apagados) */
-    div.btn-cal-vazio button, 
-    div.btn-cal-vazio div[data-testid="stBaseButton-secondary"] button,
-    div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
-        background-color: rgba(255, 255, 255, 0.02) !important; /* Quase invisível */
-        backdrop-filter: blur(4px) !important;
-        -webkit-backdrop-filter: blur(4px) !important;
-        color: rgba(240, 253, 244, 0.3) !important; /* Número fosco apagado */
-        border: 1px solid rgba(240, 253, 244, 0.1) !important; /* Borda muito sutil */
-        border-radius: 8px !important;
-        width: 100% !important;
-        height: 75px !important;
-        font-size: 19px !important;
-        font-weight: normal !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        box-shadow: none !important;
-        transition: all 0.2s ease-in-out !important;
-    }
-    
-    div.btn-cal-vazio button:hover,
-    div.btn-cal-vazio div[data-testid="stBaseButton-secondary"] button:hover {
-        background-color: rgba(255, 255, 255, 0.08) !important;
-        color: #ffffff !important;
-        border-color: rgba(0, 255, 102, 0.4) !important;
-    }
-    
     .caixa-dia-foco {
         background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
         border: 1px solid #ff5e00 !important;
@@ -280,34 +199,49 @@ for idx, row in df_mes.iterrows():
         d = row["Data"].day
         aulas_por_dia[d] = aulas_por_dia.get(d, 0) + 1
 
-# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO ---
+# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO COM INJEÇÃO DIRETA DE ESTILO ---
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
 
+# Cabeçalhos fixos dos dias da semana
 dias_semana_labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 col_headers = st.columns(7)
 for c_idx, label in enumerate(dias_semana_labels):
     with col_headers[c_idx]:
-        st.markdown(f"<div class='btn-cal-header'><button disabled>{label}</button></div>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; font-weight:bold; color:#00ff66; margin:0;'>{label}</p>", unsafe_allow_html=True)
+
+st.write("") # Espaçador sutil
 
 for semana in semanas:
     cols_dias = st.columns(7)
     for c_idx, dia_num in enumerate(semana):
         with cols_dias[c_idx]:
             if dia_num == 0:
-                st.markdown("<div class='btn-cal-vazio'><button disabled style='opacity:0;'></button></div>", unsafe_allow_html=True)
+                st.write("")
             else:
+                # Se o dia possuir períodos de aula registrados, força o estilo Verde Neon Inline
                 if dia_num in aulas_por_dia:
-                    label_botao = f"{dia_num:02d}\n{aulas_por_dia[dia_num]} pd"
-                    classe_css = "btn-cal-neon"
+                    qtd_aulas = aulas_por_dia[dia_num]
+                    html_btn = f"""
+                    <div style="text-align:center; margin-bottom:5px;">
+                        <button onclick="parent.postMessage({{type: 'streamlit:set_component_value', value: {dia_num}}}, '*')" 
+                            style="width:100%; height:75px; background-color:rgba(0,255,102,0.3); border:2.5px solid #00ff66; 
+                            color:#ffffff; font-weight:900; font-size:18px; border-radius:10px; cursor:pointer;
+                            box-shadow: 0 0 15px #00ff66, inset 0 0 5px #00ff66; transition: all 0.2s;">
+                            {dia_num:02d}<br><span style="font-size:13px; color:#00ff66; font-weight:bold;">{qtd_aulas} pd</span>
+                        </button>
+                    </div>
+                    """
+                    # Renderiza o botão customizado injetado
+                    st.components.v1.html(html_btn, height=85, scrolling=False)
+                    # Mantém uma escuta invisível para capturar o clique do botão injetado
+                    if st.session_state.get(f"btn_link_{dia_num}"):
+                        st.session_state.dia_selecionado = dia_num
                 else:
+                    # Dia sem período registrado: Estilo padrão apagado e fosco
                     label_botao = f"{dia_num:02d}"
-                    classe_css = "btn-cal-vazio"
-                
-                st.markdown(f"<div class='{classe_css}'>", unsafe_allow_html=True)
-                if st.button(label_botao, key=f"btn_dia_{dia_num}_{mes}_{ano}"):
-                    st.session_state.dia_selecionado = dia_num
-                st.markdown("</div>", unsafe_allow_html=True)
+                    if st.button(label_botao, key=f"btn_dia_vazio_{dia_num}_{mes}_{ano}"):
+                        st.session_state.dia_selecionado = dia_num
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 st.write("---")
