@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE ULTRA NEON)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE SIMÉTRICO (SEM ALTERAR TAMANHOS)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -52,17 +52,17 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* 🟢 DIAS COM PERÍODOS REGISTRADOS: Estilo Vidro Verde Neon */
+    /* 🟢 DIAS COM PERÍODOS REGISTRADOS: Estilo Verde Neon Intenso Simétrico */
     div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] button, div.btn-cal-neon button[data-testid="baseButton-secondary"] {
-        background-color: rgba(0, 255, 102, 0.22) !important;
+        background-color: rgba(0, 255, 102, 0.25) !important; /* Cor verde de fundo */
         color: #ffffff !important;
-        border: 2px solid #00ff66 !important;
-        border-radius: 10px !important;
+        border: 2px solid #00ff66 !important; /* Borda acesa */
+        border-radius: 8px !important;
         width: 100% !important;
-        height: 76px !important;
+        height: 75px !important; /* Mesma altura exata do dia vazio */
         font-size: 20px !important;
         font-weight: 900 !important;
-        box-shadow: 0 0 15px rgba(0, 255, 102, 0.5) !important;
+        box-shadow: 0 0 15px rgba(0, 255, 102, 0.5) !important; /* Brilho neon */
         white-space: pre-wrap !important;
         display: flex !important;
         flex-direction: column !important;
@@ -70,23 +70,24 @@ st.markdown("""
         align-items: center !important;
     }
     div.btn-cal-neon button:hover {
-        background-color: rgba(0, 255, 102, 0.35) !important;
+        background-color: rgba(0, 255, 102, 0.40) !important;
         box-shadow: 0 0 25px #00ff66 !important;
     }
 
-    /* 🔵 DIAS VAZIOS: Segundo plano fosco sutil */
+    /* 🔵 DIAS VAZIOS: Tamanho idêntico, mas com cor fosca apagada */
     div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
         background-color: rgba(255, 255, 255, 0.02) !important;
         color: rgba(240, 253, 244, 0.35) !important;
         border: 1px solid rgba(240, 253, 244, 0.12) !important;
         border-radius: 8px !important;
         width: 100% !important;
-        height: 75px !important;
+        height: 75px !important; /* Mesma altura exata do dia com aula */
         font-size: 18px !important;
         font-weight: normal !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
+        box-shadow: none !important;
     }
     div.btn-cal-vazio button:hover {
         background-color: rgba(255, 255, 255, 0.08) !important;
@@ -108,9 +109,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-st.title("📅 Calendário Dinâmico de Aulas")
-st.markdown("Selecione os filtros na lateral. **Clique em qualquer dia do calendário** para carregar os dados diretamente no formulário abaixo.")
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
@@ -159,7 +157,6 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                     df_gravar['Data'] = pd.to_datetime(df_gravar['Data'], errors='coerce')
                     df_gravar = df_gravar.dropna(subset=['Data'])
                     
-                    # Consolida agrupando para garantir uma linha única real por data e disciplina antes de salvar
                     col_quant = next((c for c in df_gravar.columns if 'quant' in c.lower()), 'Quantidade')
                     if col_quant in df_gravar.columns:
                         df_gravar[col_quant] = pd.to_numeric(df_gravar[col_quant], errors='coerce').fillna(1)
@@ -343,7 +340,7 @@ if dia_escolhido is not None:
                         if 'Data' in df_carregada_outra.columns:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
-            st.success("✓ Registro atualizado de forma limpa!")
+            st.success("✓ Registro updated!")
             st.rerun()
             
     with col_b2:
