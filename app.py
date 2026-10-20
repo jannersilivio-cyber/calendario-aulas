@@ -9,9 +9,13 @@ st.set_page_config(
     page_title="Calendário Dinâmico de Aulas", layout="centered"
 )
 
-# Inicializar o estado do dia selecionado se não existir
+# Inicializar os estados da sessão do Streamlit
 if "dia_selecionado" not in st.session_state:
     st.session_state.dia_selecionado = None
+if "mes_anterior" not in st.session_state:
+    st.session_state.mes_anterior = 10
+if "ano_anterior" not in st.session_state:
+    st.session_state.ano_anterior = 2026
 
 # Configurando o calendário do Python explicitamente para Português do Brasil
 try:
@@ -29,179 +33,127 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS REFINADO (FIX DO AZUL SAFIRA LOCAL + LARANJA)
+# INJEÇÃO DE CSS REFINADO (VIDRO NEON VERDE + AZUL SAFIRA)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
-    /* Configuração de fundo escuro profundo */
-    .stApp {
-        background-color: #050a07 !important;
-    }
-    
-    /* Textos principais e títulos do sistema */
-    h1, h2, h3, p, span, label {
-        color: #f0fdf4 !important;
-    }
-    
-    /* FIX DE ALINHAMENTO: Força todas as colunas de 7 dias a terem o mesmo comportamento e grid */
-    [data-testid="stHorizontalBlock"] {
-        gap: 8px !important;
-        padding-left: 0px !important;
-        padding-right: 0px !important;
-    }
-    
-    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
-        width: 100% !important;
-    }
+    .stApp { background-color: #050a07 !important; }
+    h1, h2, h3, p, span, label { color: #f0fdf4 !important; }
+    [data-testid="stHorizontalBlock"] { gap: 8px !important; padding: 0px !important; }
+    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio { width: 100% !important; }
 
-    /* ESTILO DO CABEÇALHO DA SEMANA */
     div.btn-cal-header button {
-        background-color: transparent !important;
-        color: #39ff14 !important;
-        border: none !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
-        height: 45px !important;
-        width: 100% !important;
-        text-align: center !important;
-        opacity: 1 !important;
-        box-shadow: none !important;
-        transform: none !important;
-        cursor: default !important;
+        background-color: transparent !important; color: #39ff14 !important;
+        border: none !important; font-weight: bold !important; font-size: 16px !important;
+        height: 45px !important; width: 100% !important; text-align: center !important;
     }
     
-    /* SELETOR NEON: Botões com aula */
     div.btn-cal-neon button, div.btn-cal-neon button[data-testid="baseButton-secondary"] {
         background-color: rgba(57, 255, 20, 0.08) !important;
-        backdrop-filter: blur(8px) !important;
-        -webkit-backdrop-filter: blur(8px) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(57, 255, 20, 0.4) !important;
-        border-radius: 8px !important;
-        width: 100% !important;
-        height: 75px !important;
-        padding: 4px 0px !important;
-        font-size: 22px !important;
-        line-height: 1.1 !important;
-        font-weight: bold !important;
-        white-space: pre-wrap !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-        box-shadow: 0 0 14px rgba(57, 255, 20, 0.3), inset 0 0 8px rgba(57, 255, 20, 0.1) !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important;
+        color: #ffffff !important; border: 1px solid rgba(57, 255, 20, 0.4) !important;
+        border-radius: 8px !important; width: 100% !important; height: 75px !important;
+        font-size: 20px !important; font-weight: bold !important; display: flex !important;
+        flex-direction: column !important; justify-content: center !important; align-items: center !important;
+        box-shadow: 0 0 14px rgba(57, 255, 20, 0.2) !important;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
-    div.btn-cal-neon button:hover, div.btn-cal-neon button[data-testid="baseButton-secondary"]:hover {
-        background-color: rgba(57, 255, 20, 0.22) !important;
-        border-color: #39ff14 !important;
-        box-shadow: 0 0 24px rgba(57, 255, 20, 0.6), 0 0 34px rgba(57, 255, 20, 0.3) !important;
-        transform: scale(1.04) !important;
+    div.btn-cal-neon button:hover {
+        background-color: rgba(57, 255, 20, 0.22) !important; border-color: #39ff14 !important;
+        box-shadow: 0 0 24px rgba(57, 255, 20, 0.5) !important; transform: scale(1.04) !important;
     }
 
-    /* CAPTURA LOCAL FORÇADA: DIAS VAZIOS (Efeito Vidro Azul Safira Elétrico) */
-    div.btn-cal-vazio button, div[class*="st-key-btn_vazio_"] button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
-        background-color: rgba(0, 150, 255, 0.12) !important; /* Fundo azul safira nítido */
-        backdrop-filter: blur(8px) !important;
-        -webkit-backdrop-filter: blur(8px) !important;
-        color: #d1e6ff !important;
-        border: 1px solid rgba(0, 150, 255, 0.45) !important; /* Borda azul perceptível */
-        border-radius: 8px !important;
-        width: 100% !important;
-        height: 75px !important;
-        font-size: 22px !important;
-        font-weight: bold !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        box-shadow: 0 0 8px rgba(0, 150, 255, 0.1) !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    div.btn-cal-vazio button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
+        background-color: rgba(0, 150, 255, 0.12) !important;
+        backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important;
+        color: #d1e6ff !important; border: 1px solid rgba(0, 150, 255, 0.45) !important;
+        border-radius: 8px !important; width: 100% !important; height: 75px !important;
+        font-size: 20px !important; font-weight: bold !important; display: flex !important;
+        justify-content: center !important; align-items: center !important;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
-    div.btn-cal-vazio button:hover, div[class*="st-key-btn_vazio_"] button:hover {
-        background-color: rgba(0, 150, 255, 0.25) !important;
-        color: #ffffff !important;
-        border-color: #00ccff !important;
-        box-shadow: 0 0 22px rgba(0, 204, 255, 0.6) !important;
-        transform: translateY(-2px) !important;
+    div.btn-cal-vazio button:hover {
+        background-color: rgba(0, 150, 255, 0.25) !important; color: #ffffff !important;
+        border-color: #00ccff !important; box-shadow: 0 0 22px rgba(0, 204, 255, 0.6) !important;
     }
     
-    /* DESTAQUE CYBERPUNK: Caixa do Dia Selecionado no Painel de Ajustes */
     .caixa-dia-foco {
         background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
-        border: 1px solid #ff5e00 !important;
-        padding: 12px 18px !important;
-        border-radius: 8px !important;
-        color: #ff9900 !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
-        box-shadow: 0 0 15px rgba(255, 94, 0, 0.2) !important;
-        margin-bottom: 20px !important;
+        border: 1px solid #ff5e00 !important; padding: 12px 18px !important;
+        border-radius: 8px !important; color: #ff9900 !important; font-weight: bold !important;
     }
-    
-    /* BLOCO DE MÉTRICAS DO TOPO */
     .card-metrica-topo {
-        background-color: rgba(255, 255, 255, 0.02) !important;
-        backdrop-filter: blur(6px) !important;
-        border: 1px solid rgba(57, 255, 20, 0.2) !important;
-        border-radius: 8px;
-        padding: 12px;
-        text-align: center;
+        background-color: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(57, 255, 20, 0.2) !important;
+        border-radius: 8px; padding: 14px; text-align: center;
     }
-    
-    /* Botões do painel inferior */
     div.stButton > button {
-        background-color: rgba(57, 255, 20, 0.05) !important;
-        color: #39ff14 !important;
-        border: 1px solid rgba(57, 255, 20, 0.4) !important;
-        border-radius: 8px !important;
-        width: 100% !important;
+        background-color: rgba(57, 255, 20, 0.05) !important; color: #39ff14 !important;
+        border: 1px solid rgba(57, 255, 20, 0.4) !important; border-radius: 8px !important; width: 100% !important;
     }
-    div.stButton > button:hover {
-        background-color: rgba(57, 255, 20, 0.18) !important;
-        color: #ffffff !important;
-        border-color: #39ff14 !important;
-    }
+    div.stButton > button:hover { background-color: rgba(57, 255, 20, 0.18) !important; color: #ffffff !important; }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("📅 Calendário Dinâmico de Aulas")
 st.markdown("Selecione os filtros na lateral. **Clique em qualquer dia do calendário** para carregar os dados diretamente no formulário abaixo.")
 
-# Nome do arquivo local padrão
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
-# Controle de Upload e Anexação de dados
+# --- SISTEMA DE UPLOAD COM PROCESSAMENTO DE ABAS INTEGRADAS PERMANENTES ---
 with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela existente (Upload Excel)"):
     arquivo_updated = st.file_uploader("Arraste as novas aulas dadas aqui", type=["xlsx"])
     if arquivo_updated is not None:
         try:
+            abas_finais = {}
+            if os.path.exists(excel_file):
+                xls_antigo = pd.ExcelFile(excel_file)
+                for nome_aba in xls_antigo.sheet_names:
+                    abas_finais[nome_aba] = pd.read_excel(excel_file, sheet_name=nome_aba)
+
             xls_novo = pd.ExcelFile(arquivo_updated)
-            
-            # Código para ler as abas ou turmas do arquivo novo
             for nome_aba in xls_novo.sheet_names:
-                df_aba = pd.read_excel(arquivo_updated, sheet_name=nome_aba)
+                df_nova_aba = pd.read_excel(arquivo_updated, sheet_name=nome_aba)
                 
-                # CORREÇÃO CRÍTICA AQUI: Força o Pandas a ler o formato brasileiro DD/MM/AAAA
-                if 'Data' in df_aba.columns:
-                    df_aba['Data'] = pd.to_datetime(df_aba['Data'], dayfirst=True, errors='coerce')
+                if 'Data' in df_nova_aba.columns:
+                    df_nova_aba['Data'] = pd.to_datetime(df_nova_aba['Data'], dayfirst=True, errors='coerce')
                     
-            st.success("Novas turmas e datas validadas com sucesso!")
-            
+                    if nome_aba in abas_finais:
+                        df_antiga_aba = abas_finais[nome_aba]
+                        df_antiga_aba['Data'] = pd.to_datetime(df_antiga_aba['Data'], dayfirst=True, errors='coerce')
+                        df_unificado = pd.concat([df_antiga_aba, df_nova_aba], ignore_index=True)
+                        df_unificado.drop_duplicates(subset=['Data', 'Disciplina'], keep='last', inplace=True)
+                        abas_finais[nome_aba] = df_unificado
+                    else:
+                        df_nova_aba.drop_duplicates(subset=['Data', 'Disciplina'], keep='last', inplace=True)
+                        abas_finais[nome_aba] = df_nova_aba
+
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                for nome_aba, df_gravar in abas_finais.items():
+                    df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
+                    df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
+                    
+            st.success("✓ Dados salvos com sucesso! Todas as turmas foram integradas.")
+            st.rerun()
         except Exception as e:
-            st.error(f"Erro ao processar o arquivo: {e}")
+            st.error(f"Erro ao salvar arquivo: {e}")
+# -------------------------------------------------------------
+# CONTINUAÇÃO DO CÓDIGO (COLE LOGO ABAIXO DA PARTE 1 NO MESMO ARQUIVO)
+# -------------------------------------------------------------
 
-
+# Bloco de segurança para abrir o arquivo integrado
 try:
     xls = pd.ExcelFile(excel_file)
-    turmas_disponiveis = xls.sheet_names
+    turmas_disponiveis = sorted(xls.sheet_names)
 except:
+    st.warning("Aguardando arquivo de dados padrão ou upload inicial...")
     st.stop()
-# 2. Controles de Seleção na Barra Lateral (Sidebar)
+
+# --- FILTROS SIDEBAR ---
 st.sidebar.header("Filtros")
 turma_selecionada = st.sidebar.selectbox("Selecione a Turma", turmas_disponiveis)
 
 df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
-df_turma["Data"] = pd.to_datetime(df_turma["Data"])
+df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
 disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", disciplinas)
@@ -212,117 +164,121 @@ with col_m1:
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
-col_qtd = "Quantidade de Aulas" if "Quantidade de Aulas" in df_turma.columns else "Quantidade"
+if mes != st.session_state.mes_anterior or ano != st.session_state.ano_anterior:
+    st.session_state.dia_selecionado = None
+    st.session_state.mes_anterior = mes
+    st.session_state.ano_anterior = ano
 
-# Salvar alterações
-def salvar_banco_dados(df_atualizado, turma):
-    all_sheets = {}
-    with pd.ExcelFile(excel_file) as reader:
-        for s in reader.sheet_names:
-            all_sheets[s] = df_atualizado if s == turma else pd.read_excel(excel_file, sheet_name=s)
-    with pd.ExcelWriter(excel_file, engine="openpyxl") as writer:
-        for s, df_save in all_sheets.items():
-            df_save["Data"] = pd.to_datetime(df_save["Data"]).dt.strftime("%Y-%m-%d")
-            df_save.to_excel(writer, sheet_name=s, index=False)
+# --- PROCESSAMENTO DOS REGISTROS ---
+df_filtrado_disc = df_turma[df_turma["Disciplina"] == disciplina_selecionada]
+df_ano = df_filtrado_disc[df_filtrado_disc["Data"].dt.year == ano]
+total_periodos_ano = len(df_ano)
 
-# Filtragem de dados
-df_filtrado = df_turma[(df_turma["Disciplina"] == disciplina_selecionada) & (df_turma["Data"].dt.month == mes) & (df_turma["Data"].dt.year == ano)].copy()
+df_mes = df_ano[df_ano["Data"].dt.month == mes]
+total_periodos_mes = len(df_mes)
+
+# Interface de Métricas (Top)
+st.markdown(f"""
+    <table style='width:100%; border:none; margin-bottom:20px;'>
+        <tr>
+            <td style='width:50%; border:none;'>
+                <div class='card-metrica-topo'>
+                    <span style='font-size:14px; color:#a7f3d0;'>Total no Mês ({MESES_PT[mes]})</span><br>
+                    <span style='font-size:32px; font-weight:bold; color:#39ff14;'>{total_periodos_mes} pd</span>
+                </div>
+            </td>
+            <td style='width:50%; border:none;'>
+                <div class='card-metrica-topo'>
+                    <span style='font-size:14px; color:#a7f3d0;'>Total no Ano ({ano})</span><br>
+                    <span style='font-size:32px; font-weight:bold; color:#39ff14;'>{total_periodos_ano} pd</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+""", unsafe_allow_html=True)
+
+st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
+st.markdown(f"#### {MESES_PT[mes]} de {ano}")
+
 aulas_por_dia = {}
-if not df_filtrado.empty:
-    df_filtrado["Dia"] = df_filtrado["Data"].dt.day
-    aulas_por_dia = df_filtrado.groupby("Dia")[col_qtd].sum().to_dict()
+for idx, row in df_mes.iterrows():
+    if pd.notna(row["Data"]):
+        d = row["Data"].day
+        aulas_por_dia[d] = aulas_por_dia.get(d, 0) + 1
 
-# Painel de Métricas Superior
-df_ano_total = df_turma[(df_turma["Disciplina"] == disciplina_selecionada) & (df_turma["Data"].dt.year == ano)]
-total_aulas_mes = df_filtrado[col_qtd].sum() if not df_filtrado.empty else 0
-total_aulas_ano = df_ano_total[col_qtd].sum() if not df_ano_total.empty else 0
-
-col_ind1, col_ind2 = st.columns(2)
-with col_ind1:
-    st.markdown(f"<div class='card-metrica-topo'><span style='font-size: 14px; color: #a7f3d0;'>Total no Mês ({MESES_PT[mes]})</span><br><span style='font-size: 24px; color: #39ff14; font-weight: bold;'>{int(total_aulas_mes)} pd</span></div>", unsafe_allow_html=True)
-with col_ind2:
-    st.markdown(f"<div class='card-metrica-topo'><span style='font-size: 14px; color: #a7f3d0;'>Total no Ano ({ano})</span><br><span style='font-size: 24px; color: #39ff14; font-weight: bold;'>{int(total_aulas_ano)} pd</span></div>", unsafe_allow_html=True)
-
-st.subheader(f"Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
-st.markdown(f"### {MESES_PT[mes]} de {ano}")
-
+# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO ---
 cal = calendar.Calendar(firstweekday=0)
-mes_matriz = cal.monthdayscalendar(ano, mes)
-dias_semana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+semanas = cal.monthdayscalendar(ano, mes)
 
-# Renderizar cabeçalho da semana usando a mesma proporção st.columns(7) para obter alinhamento perfeito
-cols_header = st.columns(7)
-for i, dia_nome in enumerate(dias_semana):
-    with cols_header[i]:
-        st.markdown("<div class='btn-cal-header'>", unsafe_allow_html=True)
-        st.button(dia_nome, key=f"head_{dia_nome}", disabled=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+dias_semana_labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+col_headers = st.columns(7)
+for c_idx, label in enumerate(dias_semana_labels):
+    with col_headers[c_idx]:
+        st.markdown(f"<div class='btn-cal-header'><button disabled>{label}</button></div>", unsafe_allow_html=True)
 
-# Renderizar Grade Interativa do Calendário
-for semana in mes_matriz:
+for semana in semanas:
     cols_dias = st.columns(7)
-    for i, dia in enumerate(semana):
-        with cols_dias[i].container():
-            if dia == 0:
-                st.markdown("&nbsp;")
+    for c_idx, dia_num in enumerate(semana):
+        with cols_dias[c_idx]:
+            if dia_num == 0:
+                st.markdown("<div class='btn-cal-vazio'><button disabled style='opacity:0;'></button></div>", unsafe_allow_html=True)
             else:
-                if dia in aulas_por_dia:
-                    qtd_pd = int(aulas_por_dia[dia])
-                    st.markdown("<div class='btn-cal-neon'>", unsafe_allow_html=True)
-                    label_com_aula = f"{dia}\n\n({qtd_pd} pd)"
-                    if st.button(label_com_aula, key=f"btn_dia_{dia}"):
-                        st.session_state.dia_selecionado = dia
-                        st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
+                if dia_num in aulas_por_dia:
+                    label_botao = f"{dia_num:02d}\n{aulas_por_dia[dia_num]} pd"
+                    classe_css = "btn-cal-neon"
                 else:
-                    st.markdown("<div class='btn-cal-vazio'>", unsafe_allow_html=True)
-                    if st.button(f"{dia}", key=f"btn_vazio_{dia}"):
-                        st.session_state.dia_selecionado = dia
-                        st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    label_botao = f"{dia_num:02d}"
+                    classe_css = "btn-cal-vazio"
+                
+                st.markdown(f"<div class='{classe_css}'>", unsafe_allow_html=True)
+                if st.button(label_botao, key=f"btn_dia_{dia_num}_{mes}_{ano}"):
+                    st.session_state.dia_selecionado = dia_num
+                st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("---")
+# --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
+st.write("---")
+dia_escolhido = st.session_state.dia_selecionado
 
-# 🛠️ PAINEL INTERATIVO DE GERENCIAMENTO (CONECTADO E SINCRONIZADO VIA CLIQUE)
-st.subheader("🛠️ Painel de Lançamento e Ajustes")
-
-if st.session_state.dia_selecionado is not None:
-    dia_foco = st.session_state.dia_selecionado
-    st.markdown(f"<div class='caixa-dia-foco'>📆 Dia selecionado no calendário: {dia_foco} de {MESES_PT[mes]}</div>", unsafe_allow_html=True)
+if dia_escolhido is not None:
+    st.markdown(f"<div class='caixa-dia-foco'>⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}</div>", unsafe_allow_html=True)
+    data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_escolhido}")
+    registro_existente = df_mes[df_mes["Data"] == data_alvo]
     
-    if dia_foco in aulas_por_dia:
-        periodos_atuais = int(aulas_por_dia[dia_foco])
-        st.markdown(f"Status: Esse dia possui **{periodos_atuais} períodos** registrados de {disciplina_selecionada}.")
+    col_f1, col_f2 = st.columns(2)
+    with col_f1:
+        nova_disciplina = st.text_input("Disciplina do Lançamento", value=disciplina_selecionada)
+    with col_f2:
+        periodos_sugeridos = int(len(registro_existente)) if not registro_existente.empty else 1
+        num_periodos = st.number_input("Quantidade de Períodos", min_value=1, max_value=10, value=max(1, periodos_sugeridos))
         
-        novo_valor_periodos = st.number_input("Alterar quantidade de períodos para:", min_value=1, max_value=10, value=periodos_atuais, key="num_direct_edit")
-        
-        col_act1, col_edit_sp = st.columns(2)
-        with col_act1:
-            if st.button("💾 Gravar Alteração"):
-                data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_foco}")
-                df_turma.loc[(df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada), col_qtd] = novo_valor_periodos
-                salvar_banco_dados(df_turma, turma_selecionada)
-                st.success("Lançamento atualizado com sucesso!")
-                st.session_state.dia_selecionado = None
-                st.rerun()
-        with col_edit_sp:
-            if st.button("🗑️ Excluir Aula Deste Dia", type="primary"):
-                data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_foco}")
-                df_removido = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
-                salvar_banco_dados(df_removido, turma_selecionada)
-                st.success("Lançamento removido do Excel!")
-                st.session_state.dia_selecionado = None
-                st.rerun()
-    else:
-        st.markdown(f"Status: Não há aulas de {disciplina_selecionada} registradas neste dia.")
-        periodos_novos = st.number_input("Inserir quantidade de períodos dados:", min_value=1, max_value=10, value=1, key="num_direct_inc")
-        
-        if st.button("🚀 Registrar Nova Aula"):
-            data_nova = pd.to_datetime(f"{ano}-{mes}-{dia_foco}")
-            nova_linha = {"Data": data_nova, "Disciplina": disciplina_selecionada, col_qtd: periodos_novos}
-            salvar_banco_dados(pd.concat([df_turma, pd.DataFrame([nova_linha])], ignore_index=True), turma_selecionada)
-            st.success("Nova aula cadastrada com sucesso!")
+    col_b1, col_b2 = st.columns(2)
+    with col_b1:
+        if st.button("💾 Salvar/Alterar Registro"):
+            df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
+            novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina} for _ in range(num_periodos)]
+            df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
+            
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                for nome_aba in turmas_disponiveis:
+                    if nome_aba == turma_selecionada:
+                        df_final_turma["Data"] = df_final_turma["Data"].dt.strftime('%Y-%m-%d')
+                        df_final_turma.to_excel(writer, sheet_name=nome_aba, index=False)
+                    else:
+                        pd.read_excel(excel_file, sheet_name=nome_aba).to_excel(writer, sheet_name=nome_aba, index=False)
+            st.success("✓ Registro atualizado!")
+            st.rerun()
+            
+    with col_b2:
+        if st.button("🗑️ Deletar Aula do Calendário"):
+            df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                for nome_aba in turmas_disponiveis:
+                    if nome_aba == turma_selecionada:
+                        df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
+                        df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
+                    else:
+                        pd.read_excel(excel_file, sheet_name=nome_aba).to_excel(writer, sheet_name=nome_aba, index=False)
             st.session_state.dia_selecionado = None
             st.rerun()
 else:
-    st.info("💡 Clique em cima de qualquer dia do calendário acima para abrir as opções de incluir, alterar ou excluir períodos de aula.")
+    st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
