@@ -99,27 +99,37 @@ st.markdown("Selecione os filtros na lateral. **Clique em qualquer dia do calend
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
-# --- SISTEMA DE UPLOAD COM PROCESSAMENTO DE ABAS INTEGRADAS PERMANENTES ---
+# --- SISTEMA DE UPLOAD DE ABAS INTEGRADAS BLINDADO ---
 with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela existente (Upload Excel)"):
     arquivo_updated = st.file_uploader("Arraste as novas aulas dadas aqui", type=["xlsx"])
     if arquivo_updated is not None:
         try:
             abas_finais = {}
+            # 1. Tenta resgatar as abas do arquivo existente
             if os.path.exists(excel_file):
-                xls_antigo = pd.ExcelFile(excel_file)
-                for nome_aba in xls_antigo.sheet_names:
-                    abas_finais[nome_aba] = pd.read_excel(excel_file, sheet_name=nome_aba)
+                try:
+                    xls_antigo = pd.ExcelFile(excel_file)
+                    for nome_aba in xls_antigo.sheet_names:
+                        df_carregado = pd.read_excel(excel_file, sheet_name=nome_aba)
+                        if not df_carregado.empty:
+                            abas_finais[nome_aba] = df_carregado
+                except:
+                    pass
 
+            # 2. Processa o arquivo anexado pelo usuário
             xls_novo = pd.ExcelFile(arquivo_updated)
             for nome_aba in xls_novo.sheet_names:
                 df_nova_aba = pd.read_excel(arquivo_updated, sheet_name=nome_aba)
                 
-                if 'Data' in df_nova_aba.columns:
+                # Valida se a planilha possui dados úteis
+                if not df_nova_aba.empty and 'Data' in df_nova_aba.columns:
                     df_nova_aba['Data'] = pd.to_datetime(df_nova_aba['Data'], dayfirst=True, errors='coerce')
+                    df_nova_aba.dropna(subset=['Data'], inplace=True)
                     
                     if nome_aba in abas_finais:
                         df_antiga_aba = abas_finais[nome_aba]
                         df_antiga_aba['Data'] = pd.to_datetime(df_antiga_aba['Data'], dayfirst=True, errors='coerce')
+                        
                         df_unificado = pd.concat([df_antiga_aba, df_nova_aba], ignore_index=True)
                         df_unificado.drop_duplicates(subset=['Data', 'Disciplina'], keep='last', inplace=True)
                         abas_finais[nome_aba] = df_unificado
@@ -127,13 +137,18 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                         df_nova_aba.drop_duplicates(subset=['Data', 'Disciplina'], keep='last', inplace=True)
                         abas_finais[nome_aba] = df_nova_aba
 
-            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-                for nome_aba, df_gravar in abas_finais.items():
-                    df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
-                    df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
-                    
-            st.success("✓ Dados salvos com sucesso! Todas as turmas foram integradas.")
-            st.rerun()
+            # 3. Validação anti-vazio: Garante que o dicionário não passe em branco
+            if not abas_finais:
+                st.error("⚠️ O arquivo enviado não contém uma coluna válida chamada 'Data' ou está totalmente vazio.")
+            else:
+                with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                    for nome_aba, df_gravar in abas_finais.items():
+                        df_gravar['Data'] = pd.to_datetime(df_gravar['Data'], errors='coerce')
+                        df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
+                        df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
+                        
+                st.success("✓ Dados salvos com sucesso! Todas as turmas foram integradas.")
+                st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
 # -------------------------------------------------------------
