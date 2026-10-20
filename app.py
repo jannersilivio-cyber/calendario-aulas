@@ -344,11 +344,13 @@ if dia_escolhido is not None:
                         df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
                         df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
                     else:
-                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
-if 'Data' in df_carregada_outra.columns:
-df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
-df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+            # Loops de gravação das outras abas sem corromper as turmas antigas
+            df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+            if 'Data' in df_carregada_outra.columns:
+                df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
+            df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+            
 st.session_state.dia_selecionado = None
 st.rerun()
 else:
-st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
+    st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
