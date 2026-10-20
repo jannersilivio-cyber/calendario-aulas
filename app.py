@@ -44,13 +44,11 @@ st.markdown("""
         color: #f0fdf4 !important;
     }
     
-    /* Configuração e alinhamento do bloco de colunas do Streamlit */
     [data-testid="stHorizontalBlock"] {
         gap: 10px !important;
         padding: 0px !important;
     }
     
-    /* Seletores reforçados para os botões nativos do Streamlit */
     div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] {
         background-color: rgba(0, 255, 102, 0.25) !important;
         color: #ffffff !important;
@@ -169,16 +167,15 @@ df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
 df_turma.dropna(subset=["Data"], inplace=True)
 
-# FILTRO REMOVEDOR DE ERRO (ANTI-BUG DOMINGO FANTASMA):
-# Se for a turma 203, disciplina Biologia e a data for exatamente 2026-06-07, remove a linha inválida
-df_turma = df_turma[~((df_turma["Disciplina"] == "Biologia") & (df_turma["Data"] == "2026-06-07"))]
+# CORREÇÃO DEFINITIVA UNIFICADA: Remove o dia 07/06/2026 de TODAS as disciplinas desta turma
+df_turma = df_turma[df_turma["Data"] != "2026-06-07"]
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
 disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", disciplinas)
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=5) # Junho como padrão
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=5) # Junho padrão
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
