@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE SIMÉTRICO (SEM ALTERAR TAMANHOS)
+# INJEÇÃO DE CSS DE ESTRUTURA GERAL (AMBIENTE ESCURO)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -48,50 +48,10 @@ st.markdown("""
         padding-left: 0px !important;
         padding-right: 0px !important;
     }
-    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
-        width: 100% !important;
-    }
     
-    /* 🟢 DIAS COM PERÍODOS REGISTRADOS: Estilo Verde Neon Intenso Simétrico */
-    div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] button, div.btn-cal-neon button[data-testid="baseButton-secondary"] {
-        background-color: rgba(0, 255, 102, 0.25) !important; /* Cor verde de fundo */
-        color: #ffffff !important;
-        border: 2px solid #00ff66 !important; /* Borda acesa */
-        border-radius: 8px !important;
-        width: 100% !important;
-        height: 75px !important; /* Mesma altura exata do dia vazio */
-        font-size: 20px !important;
-        font-weight: 900 !important;
-        box-shadow: 0 0 15px rgba(0, 255, 102, 0.5) !important; /* Brilho neon */
-        white-space: pre-wrap !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-    div.btn-cal-neon button:hover {
-        background-color: rgba(0, 255, 102, 0.40) !important;
-        box-shadow: 0 0 25px #00ff66 !important;
-    }
-
-    /* 🔵 DIAS VAZIOS: Tamanho idêntico, mas com cor fosca apagada */
-    div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
-        background-color: rgba(255, 255, 255, 0.02) !important;
-        color: rgba(240, 253, 244, 0.35) !important;
-        border: 1px solid rgba(240, 253, 244, 0.12) !important;
-        border-radius: 8px !important;
-        width: 100% !important;
-        height: 75px !important; /* Mesma altura exata do dia com aula */
-        font-size: 18px !important;
-        font-weight: normal !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        box-shadow: none !important;
-    }
-    div.btn-cal-vazio button:hover {
-        background-color: rgba(255, 255, 255, 0.08) !important;
-        border-color: rgba(0, 255, 102, 0.4) !important;
+    /* Remove margens extras dos blocos de textos acima dos botões */
+    div[data-testid="stMarkdownContainer"] p {
+        margin-bottom: 2px !important;
     }
     
     .caixa-dia-foco {
@@ -169,7 +129,7 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
             st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
-# --- ANTI-TRAVAMENTO: Se o arquivo Excel sumir, gera uma estrutura básica inicial ---
+# --- ANTI-TRAVAMENTO ---
 if not os.path.exists(excel_file):
     try:
         with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
@@ -178,7 +138,6 @@ if not os.path.exists(excel_file):
     except:
         pass
 
-# Bloco de segurança para abrir o arquivo integrado
 try:
     xls = pd.ExcelFile(excel_file)
     turmas_disponiveis = sorted(xls.sheet_names)
@@ -191,14 +150,12 @@ st.sidebar.header("Filtros")
 turma_selecionada = st.sidebar.selectbox("Selecione a Turma", turmas_disponiveis)
 
 df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
-
 df_turma.columns = df_turma.columns.str.strip()
 if 'Disciplina' in df_turma.columns:
     df_turma['Disciplina'] = df_turma['Disciplina'].astype(str).str.strip()
 
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
 df_turma.dropna(subset=["Data"], inplace=True)
-
 df_turma = df_turma[df_turma["Data"] != "2026-06-07"]
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
@@ -259,7 +216,7 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# CONTAGEM REAL POR DATA REAL SOMA CONTROLADA
+# CONTAGEM REAL POR DATA REAL
 aulas_por_dia = {}
 if not df_mes.empty:
     if coluna_quantidade in df_mes.columns:
@@ -290,18 +247,17 @@ for semana in semanas:
             if dia_num == 0:
                 st.write("")
             else:
+                # SE HOUVER AULA NO DIA: Injeta o card verde nativo (st.success) empilhado simetricamente
                 if dia_num in aulas_por_dia:
                     qtd_pds = aulas_por_dia[dia_num]
-                    label_botao = f"{dia_num:02d}\n{qtd_pds} pd"
-                    classe_css = "btn-cal-neon"
+                    st.success(f"**{qtd_pds} pd**")
+                    if st.button(f"{dia_num:02d}", key=f"btn_dia_nativo_grade_{dia_num}_{mes}_{ano}", use_container_width=True):
+                        st.session_state.dia_selecionado = dia_num
                 else:
-                    label_botao = f"{dia_num:02d}"
-                    classe_css = "btn-cal-vazio"
-                
-                st.markdown(f"<div class='{classe_css}'>", unsafe_allow_html=True)
-                if st.button(label_botao, key=f"btn_dia_nativo_grade_{dia_num}_{mes}_{ano}", use_container_width=True):
-                    st.session_state.dia_selecionado = dia_num
-                st.markdown("</div>", unsafe_allow_html=True)
+                    # Dia sem período letivo: Mantém espaçador transparente sutil para não desalinhar a linha
+                    st.markdown("<p style='text-align:center; color:rgba(240,253,244,0.15); font-size:14px; margin-top:12px; margin-bottom:12px;'>⚪</p>", unsafe_allow_html=True)
+                    if st.button(f"{dia_num:02d}", key=f"btn_dia_nativo_grade_{dia_num}_{mes}_{ano}", use_container_width=True):
+                        st.session_state.dia_selecionado = dia_num
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 st.write("---")
@@ -340,7 +296,7 @@ if dia_escolhido is not None:
                         if 'Data' in df_carregada_outra.columns:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
-            st.success("✓ Registro updated!")
+            st.success("✓ Registro atualizado!")
             st.rerun()
             
     with col_b2:
