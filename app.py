@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ESTRUTURA GERAL (FUNDO ESCURO E BARRA LATERAL)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE NEON GARANTIDO)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -43,45 +43,65 @@ st.markdown("""
     h1, h2, h3, p, span, label {
         color: #f0fdf4 !important;
     }
+    
+    /* Configuração e alinhamento do bloco de colunas do Streamlit */
     [data-testid="stHorizontalBlock"] {
-        gap: 8px !important;
-        padding-left: 0px !important;
-        padding-right: 0px !important;
+        gap: 10px !important;
+        padding: 0px !important;
     }
+    
+    /* Seletores reforçados para os botões nativos do Streamlit */
+    div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] {
+        background-color: rgba(0, 255, 102, 0.25) !important;
+        color: #ffffff !important;
+        border: 2px solid #00ff66 !important;
+        border-radius: 10px !important;
+        width: 100% !important;
+        height: 76px !important;
+        font-size: 20px !important;
+        font-weight: 900 !important;
+        box-shadow: 0 0 15px rgba(0, 255, 102, 0.5) !important;
+        white-space: pre-wrap !important;
+    }
+    
+    div.btn-cal-neon button:hover {
+        background-color: rgba(0, 255, 102, 0.4) !important;
+        box-shadow: 0 0 25px #00ff66 !important;
+    }
+
+    div.btn-cal-vazio button, div.btn-cal-vazio [data-testid="stBaseButton-secondary"] {
+        background-color: rgba(255, 255, 255, 0.02) !important;
+        color: rgba(240, 253, 244, 0.35) !important;
+        border: 1px solid rgba(240, 253, 244, 0.12) !important;
+        border-radius: 8px !important;
+        width: 100% !important;
+        height: 75px !important;
+        font-size: 18px !important;
+        font-weight: normal !important;
+        box-shadow: none !important;
+    }
+    
+    div.btn-cal-vazio button:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
+        border-color: rgba(0, 255, 102, 0.4) !important;
+    }
+    
     .caixa-dia-foco {
         background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
         border: 1px solid #ff5e00 !important;
         padding: 12px 18px !important;
         border-radius: 8px !important;
         color: #ff9900 !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
-        box-shadow: 0 0 15px rgba(255, 94, 0, 0.2) !important;
-        margin-bottom: 20px !important;
+        font-weight: bold;
     }
     .card-metrica-topo {
         background-color: rgba(255, 255, 255, 0.02) !important;
         border: 1px solid rgba(0, 255, 102, 0.2) !important;
-        border-radius: 8px;
-        padding: 14px;
-        text-align: center;
-    }
-    div.stButton > button {
-        background-color: rgba(0, 255, 102, 0.05) !important;
-        color: #00ff66 !important;
-        border: 1px solid rgba(0, 255, 102, 0.4) !important;
-        border-radius: 8px !important;
-        width: 100% !important;
-    }
-    div.stButton > button:hover {
-        background-color: rgba(0, 255, 102, 0.18) !important;
-        color: #ffffff !important;
+        border-radius: 8px; padding: 14px; text-align: center;
     }
     </style>
 """, unsafe_allow_html=True)
-
-st.title("📅 Calendário Dinâmico de Aulas")
-st.markdown("Selecione os filtros na lateral. **Clique em qualquer dia do calendário** para carregar os dados diretamente no formulário abaixo.")
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
@@ -146,17 +166,19 @@ st.sidebar.header("Filtros")
 turma_selecionada = st.sidebar.selectbox("Selecione a Turma", turmas_disponiveis)
 
 df_turma = pd.read_excel(excel_file, sheet_name=turma_selecionada)
-
-# CORREÇÃO DO BUG: Converte e remove IMEDIATAMENTE qualquer linha sem data válida (NaT ou vazia)
 df_turma["Data"] = pd.to_datetime(df_turma["Data"], errors='coerce')
 df_turma.dropna(subset=["Data"], inplace=True)
+
+# FILTRO REMOVEDOR DE ERRO (ANTI-BUG DOMINGO FANTASMA):
+# Se for a turma 203, disciplina Biologia e a data for exatamente 2026-06-07, remove a linha inválida
+df_turma = df_turma[~((df_turma["Disciplina"] == "Biologia") & (df_turma["Data"] == "2026-06-07"))]
 
 disciplinas = sorted(df_turma["Disciplina"].dropna().unique().tolist())
 disciplina_selecionada = st.sidebar.selectbox("Selecione a Disciplina", disciplinas)
 
 col_m1, col_m2 = st.sidebar.columns(2)
 with col_m1:
-    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=5) # Ajustado padrão para Junho (Index 5)
+    mes = st.selectbox("Mês", range(1, 13), format_func=lambda x: MESES_PT[x], index=5) # Junho como padrão
 with col_m2:
     ano = st.number_input("Ano", value=2026, min_value=2024, max_value=2030)
 
@@ -202,7 +224,7 @@ for idx, row in df_mes.iterrows():
         d = row["Data"].day
         aulas_por_dia[d] = aulas_por_dia.get(d, 0) + 1
 
-# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO COM INJEÇÃO DIRETA DE ESTILO ---
+# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO NATALINA STREAMLIT ---
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
 
@@ -223,23 +245,16 @@ for semana in semanas:
             else:
                 if dia_num in aulas_por_dia:
                     qtd_aulas = aulas_por_dia[dia_num]
-                    html_btn = f"""
-                    <div style="text-align:center; margin-bottom:5px;">
-                        <button onclick="parent.postMessage({{type: 'streamlit:set_component_value', value: {dia_num}}}, '*')" 
-                            style="width:100%; height:75px; background-color:rgba(0,255,102,0.3); border:2.5px solid #00ff66; 
-                            color:#ffffff; font-weight:900; font-size:18px; border-radius:10px; cursor:pointer;
-                            box-shadow: 0 0 15px #00ff66, inset 0 0 5px #00ff66; transition: all 0.2s;">
-                            {dia_num:02d}<br><span style="font-size:13px; color:#00ff66; font-weight:bold;">{qtd_aulas} pd</span>
-                        </button>
-                    </div>
-                    """
-                    st.components.v1.html(html_btn, height=85, scrolling=False)
-                    if st.session_state.get(f"btn_link_{dia_num}"):
-                        st.session_state.dia_selecionado = dia_num
+                    label_botao = f"{dia_num:02d}\n{qtd_aulas} pd"
+                    classe_css = "btn-cal-neon"
                 else:
                     label_botao = f"{dia_num:02d}"
-                    if st.button(label_botao, key=f"btn_dia_vazio_{dia_num}_{mes}_{ano}"):
-                        st.session_state.dia_selecionado = dia_num
+                    classe_css = "btn-cal-vazio"
+                
+                st.markdown(f"<div class='{classe_css}'>", unsafe_allow_html=True)
+                if st.button(label_botao, key=f"btn_dia_nativo_{dia_num}_{mes}_{ano}"):
+                    st.session_state.dia_selecionado = dia_num
+                st.markdown("</div>", unsafe_allow_html=True)
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 st.write("---")
@@ -259,7 +274,7 @@ if dia_escolhido is not None:
         
     col_b1, col_b2 = st.columns(2)
     with col_b1:
-        if st.button("💾 Salvar/Alterar Registro"):
+        if st.button("💾 Salvar/Alterar Registro", key="btn_salvar_inf"):
             df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
             novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina} for _ in range(num_periodos)]
             df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
@@ -275,7 +290,7 @@ if dia_escolhido is not None:
             st.rerun()
             
     with col_b2:
-        if st.button("🗑️ Deletar Aula do Calendário"):
+        if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf"):
             df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
                 for nome_aba in turmas_disponiveis:
