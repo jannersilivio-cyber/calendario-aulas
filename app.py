@@ -33,64 +33,137 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS REFINADO (VIDRO NEON VERDE + AZUL SAFIRA)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE MÁXIMO PARA OS DIAS COM AULA)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
-    .stApp { background-color: #050a07 !important; }
-    h1, h2, h3, p, span, label { color: #f0fdf4 !important; }
-    [data-testid="stHorizontalBlock"] { gap: 8px !important; padding: 0px !important; }
-    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio { width: 100% !important; }
+    /* Configuração de fundo escuro profundo */
+    .stApp {
+        background-color: #040805 !important;
+    }
+    
+    /* Textos principais e títulos do sistema */
+    h1, h2, h3, p, span, label {
+        color: #f0fdf4 !important;
+    }
+    
+    /* Grid de alinhamento perfeito para as colunas de dias da semana */
+    [data-testid="stHorizontalBlock"] {
+        gap: 8px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+    
+    div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
+        width: 100% !important;
+    }
 
+    /* ESTILO DO CABEÇALHO DA SEMANA (VERDE BRILHANTE) */
     div.btn-cal-header button {
-        background-color: transparent !important; color: #39ff14 !important;
-        border: none !important; font-weight: bold !important; font-size: 16px !important;
-        height: 45px !important; width: 100% !important; text-align: center !important;
+        background-color: transparent !important;
+        color: #39ff14 !important;
+        border: none !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        height: 45px !important;
+        width: 100% !important;
+        text-align: center !important;
+        cursor: default !important;
+        box-shadow: none !important;
+        transform: none !important;
     }
     
+    /* 🟢 DIAS COM AULA: Super Destaque Vidro Verde Neon */
     div.btn-cal-neon button, div.btn-cal-neon button[data-testid="baseButton-secondary"] {
-        background-color: rgba(57, 255, 20, 0.08) !important;
-        backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important;
-        color: #ffffff !important; border: 1px solid rgba(57, 255, 20, 0.4) !important;
-        border-radius: 8px !important; width: 100% !important; height: 75px !important;
-        font-size: 20px !important; font-weight: bold !important; display: flex !important;
-        flex-direction: column !important; justify-content: center !important; align-items: center !important;
-        box-shadow: 0 0 14px rgba(57, 255, 20, 0.2) !important;
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        background-color: rgba(57, 255, 20, 0.18) !important; /* Fundo mais denso e visível */
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        color: #ffffff !important;
+        border: 2px solid #39ff14 !important; /* Borda mais grossa e totalmente acesa */
+        border-radius: 10px !important;
+        width: 100% !important;
+        height: 78px !important;
+        padding: 4px 0px !important;
+        font-size: 21px !important;
+        line-height: 1.2 !important;
+        font-weight: 900 !important; /* Texto mais espesso */
+        white-space: pre-wrap !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        /* Brilho externo expandido estilo Cyberpunk */
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.4), inset 0 0 10px rgba(57, 255, 20, 0.2) !important;
+        transition: all 0.3s ease-in-out !important;
     }
-    div.btn-cal-neon button:hover {
-        background-color: rgba(57, 255, 20, 0.22) !important; border-color: #39ff14 !important;
-        box-shadow: 0 0 24px rgba(57, 255, 20, 0.5) !important; transform: scale(1.04) !important;
+    div.btn-cal-neon button:hover, div.btn-cal-neon button[data-testid="baseButton-secondary"]:hover {
+        background-color: rgba(57, 255, 20, 0.35) !important;
+        border-color: #39ff14 !important;
+        box-shadow: 0 0 32px rgba(57, 255, 20, 0.8), 0 0 45px rgba(57, 255, 20, 0.4) !important;
+        transform: scale(1.05) !important;
     }
 
+    /* 🔵 DIAS VAZIOS: Efeito Apagado/Segundo Plano (Contraste) */
     div.btn-cal-vazio button, div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
-        background-color: rgba(0, 150, 255, 0.12) !important;
-        backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important;
-        color: #d1e6ff !important; border: 1px solid rgba(0, 150, 255, 0.45) !important;
-        border-radius: 8px !important; width: 100% !important; height: 75px !important;
-        font-size: 20px !important; font-weight: bold !important; display: flex !important;
-        justify-content: center !important; align-items: center !important;
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        background-color: rgba(0, 150, 255, 0.03) !important; /* Quase transparente */
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        color: rgba(209, 230, 255, 0.4) !important; /* Texto fosco/acinzentado */
+        border: 1px solid rgba(0, 150, 255, 0.15) !important; /* Borda bem suave */
+        border-radius: 8px !important;
+        width: 100% !important;
+        height: 75px !important;
+        font-size: 19px !important;
+        font-weight: normal !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        box-shadow: none !important; /* Sem brilho nenhum */
+        transition: all 0.3s ease-in-out !important;
     }
-    div.btn-cal-vazio button:hover {
-        background-color: rgba(0, 150, 255, 0.25) !important; color: #ffffff !important;
-        border-color: #00ccff !important; box-shadow: 0 0 22px rgba(0, 204, 255, 0.6) !important;
+    div.btn-cal-vazio button:hover, div.btn-cal-vazio button[data-testid="baseButton-secondary"]:hover {
+        background-color: rgba(0, 150, 255, 0.15) !important;
+        color: #ffffff !important;
+        border-color: rgba(0, 204, 255, 0.6) !important;
+        box-shadow: 0 0 15px rgba(0, 204, 255, 0.3) !important;
+        transform: translateY(-1px) !important;
     }
     
+    /* 🟠 PAINEL DE DIA SELECIONADO (Cyberpunk Laranja) */
     .caixa-dia-foco {
         background: linear-gradient(90deg, rgba(255, 94, 0, 0.15), rgba(255, 153, 0, 0.05)) !important;
-        border: 1px solid #ff5e00 !important; padding: 12px 18px !important;
-        border-radius: 8px !important; color: #ff9900 !important; font-weight: bold !important;
+        border: 1px solid #ff5e00 !important;
+        padding: 12px 18px !important;
+        border-radius: 8px !important;
+        color: #ff9900 !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        box-shadow: 0 0 15px rgba(255, 94, 0, 0.2) !important;
+        margin-bottom: 20px !important;
     }
+    
+    /* CARDS DE MÉTRICAS DO TOPO */
     .card-metrica-topo {
-        background-color: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(57, 255, 20, 0.2) !important;
-        border-radius: 8px; padding: 14px; text-align: center;
+        background-color: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid rgba(57, 255, 20, 0.2) !important;
+        border-radius: 8px;
+        padding: 14px;
+        text-align: center;
     }
+    
+    /* Botões Padrão do Painel Inferior */
     div.stButton > button {
-        background-color: rgba(57, 255, 20, 0.05) !important; color: #39ff14 !important;
-        border: 1px solid rgba(57, 255, 20, 0.4) !important; border-radius: 8px !important; width: 100% !important;
+        background-color: rgba(57, 255, 20, 0.05) !important;
+        color: #39ff14 !important;
+        border: 1px solid rgba(57, 255, 20, 0.4) !important;
+        border-radius: 8px !important;
+        width: 100% !important;
     }
-    div.stButton > button:hover { background-color: rgba(57, 255, 20, 0.18) !important; color: #ffffff !important; }
+    div.stButton > button:hover {
+        background-color: rgba(57, 255, 20, 0.18) !important;
+        color: #ffffff !important;
+        border-color: #39ff14 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -105,7 +178,6 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
     if arquivo_updated is not None:
         try:
             abas_finais = {}
-            # 1. Tenta resgatar as abas do arquivo existente
             if os.path.exists(excel_file):
                 try:
                     xls_antigo = pd.ExcelFile(excel_file)
@@ -116,12 +188,10 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                 except:
                     pass
 
-            # 2. Processa o arquivo anexado pelo usuário
             xls_novo = pd.ExcelFile(arquivo_updated)
             for nome_aba in xls_novo.sheet_names:
                 df_nova_aba = pd.read_excel(arquivo_updated, sheet_name=nome_aba)
                 
-                # Valida se a planilha possui dados úteis
                 if not df_nova_aba.empty and 'Data' in df_nova_aba.columns:
                     df_nova_aba['Data'] = pd.to_datetime(df_nova_aba['Data'], dayfirst=True, errors='coerce')
                     df_nova_aba.dropna(subset=['Data'], inplace=True)
@@ -137,7 +207,6 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                         df_nova_aba.drop_duplicates(subset=['Data', 'Disciplina'], keep='last', inplace=True)
                         abas_finais[nome_aba] = df_nova_aba
 
-            # 3. Validação anti-vazio: Garante que o dicionário não passe em branco
             if not abas_finais:
                 st.error("⚠️ O arquivo enviado não contém uma coluna válida chamada 'Data' ou está totalmente vazio.")
             else:
@@ -151,6 +220,7 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                 st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
+
 
 # -------------------------------------------------------------
 # CONTINUAÇÃO DO CÓDIGO (COLE LOGO ABAIXO DA PARTE 1 NO MESMO ARQUIVO)
