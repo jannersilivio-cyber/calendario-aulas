@@ -45,13 +45,14 @@ st.markdown("""
     }
     [data-testid="stHorizontalBlock"] {
         gap: 10px !important;
-        padding: 0px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
     }
     div.btn-cal-header, div.btn-cal-neon, div.btn-cal-vazio {
         width: 100% !important;
     }
     
-    /* 🟢 DIAS COM AULA: Verde Neon Ativo */
+    /* 🟢 DIAS COM AULA: Verde Neon Ativo com Quebra de Linha */
     div.btn-cal-neon button, div.btn-cal-neon [data-testid="stBaseButton-secondary"] {
         background-color: rgba(0, 255, 102, 0.22) !important;
         color: #ffffff !important;
@@ -104,7 +105,7 @@ st.markdown("""
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
-# --- G GESTÃO DE UPLOAD SEGURO ANTI-ACÚMULO ---
+# --- GESTÃO DE UPLOAD SEGURO ANTI-ACÚMULO ---
 with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela existente (Upload Excel)"):
     arquivo_updated = st.file_uploader("Arraste as novas aulas dadas aqui", type=["xlsx"])
     if arquivo_updated is not None:
@@ -132,7 +133,6 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                         df_antiga_aba = abas_finais[nome_aba]
                         df_antiga_aba['Data'] = pd.to_datetime(df_antiga_aba['Data'], dayfirst=True, errors='coerce')
                         
-                        # Limpa registros antigos combinados para evitar o efeito "bola de neve"
                         datas_novas = df_nova_aba['Data'].unique()
                         disciplinas_novas = df_nova_aba['Disciplina'].unique() if 'Disciplina' in df_nova_aba.columns else []
                         
@@ -218,7 +218,7 @@ st.markdown(f"""
 
 st.markdown(f"### Turma: {turma_selecionada} | Disciplina: {disciplina_selecionada}")
 
-# Contagem controlada das repetições reais por dia para evitar acúmulos incorretos
+# CONTAGEM CORRIGIDA POR REPETIÇÃO: Mapeia o número exato de períodos por dia baseado em linhas repetidas
 aulas_por_dia = {}
 if not df_mes.empty:
     contagem_df = df_mes.groupby(df_mes["Data"].dt.day).size().to_dict()
@@ -246,6 +246,7 @@ for semana in semanas:
             else:
                 if dia_num in aulas_por_dia:
                     qtd_aulas = aulas_por_dia[dia_num]
+                    # Exibe o número do dia e o total exato de períodos embaixo
                     label_botao = f"{dia_num:02d}\n{qtd_aulas} pd"
                     classe_css = "btn-cal-neon"
                 else:
