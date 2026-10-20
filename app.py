@@ -135,8 +135,6 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
 
-# Linha de segurança neutra marcando o encerramento da primeira metade
-sinalizador_divisao = "Parte 1 Finalizada"
 # --- ANTI-TRAVAMENTO DOS FILTROS ---
 if not os.path.exists(excel_file):
     try:
@@ -238,6 +236,7 @@ if not df_mes.empty:
 
 # --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
 cal = calendar.Calendar(firstweekday=0)
+# --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
 semanas = cal.monthdayscalendar(ano, mes)
 
 html_calendario = """
@@ -346,12 +345,12 @@ if dia_escolhido is not None:
                     if nome_aba == turma_selecionada:
                         df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
                         df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
+                    else:
+                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+                        if 'Data' in df_carregada_outra.columns:
+                            df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
+                        df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+            st.session_state.dia_selecionado = None
+            st.rerun()
 else:
-df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
-if 'Data' in df_carregada_outra.columns:
-df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
-df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
-st.session_state.dia_selecionado = None
-st.rerun()
-else:
-st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
+    st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
