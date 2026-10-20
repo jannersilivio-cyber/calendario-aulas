@@ -33,7 +33,7 @@ MESES_PT = {
 }
 
 # -------------------------------------------------------------
-# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE ULTRA NEON)
+# INJEÇÃO DE CSS DE ALTO CONTRASTE (DESTAQUE VERDE NEON INTENSO)
 # -------------------------------------------------------------
 st.markdown("""
     <style>
@@ -53,7 +53,7 @@ st.markdown("""
     }
     div.btn-cal-header button, div.btn-cal-header div[data-testid="stBaseButton-secondary"] button {
         background-color: transparent !important;
-        color: #39ff14 !important;
+        color: #00ff66 !important;
         border: none !important;
         font-weight: bold !important;
         font-size: 16px !important;
@@ -65,20 +65,20 @@ st.markdown("""
         transform: none !important;
     }
     
-    /* 🟢 DIAS COM AULA: Super Destaque Vidro Verde Neon */
+    /* 🟢 DIAS COM AULA: Destaque Máximo Verde Neon Elétrico */
     div.btn-cal-neon button, 
     div.btn-cal-neon div[data-testid="stBaseButton-secondary"] button,
     div.btn-cal-neon button[data-testid="baseButton-secondary"] {
-        background-color: rgba(57, 255, 20, 0.22) !important;
+        background-color: rgba(0, 255, 102, 0.28) !important; /* Fundo verde nítido e aceso */
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         color: #ffffff !important;
-        border: 2px solid #39ff14 !important;
+        border: 2.5px solid #00ff66 !important; /* Borda verde grossa e radioativa */
         border-radius: 10px !important;
         width: 100% !important;
         height: 78px !important;
         padding: 4px 0px !important;
-        font-size: 21px !important;
+        font-size: 22px !important;
         line-height: 1.2 !important;
         font-weight: 900 !important;
         white-space: pre-wrap !important;
@@ -86,26 +86,30 @@ st.markdown("""
         flex-direction: column !important;
         justify-content: center !important;
         align-items: center !important;
-        box-shadow: 0 0 20px rgba(57, 255, 20, 0.5), inset 0 0 10px rgba(57, 255, 20, 0.2) !important;
+        /* Efeito de iluminação externa ativa expandida */
+        box-shadow: 0 0 25px rgba(0, 255, 102, 0.6), inset 0 0 12px rgba(0, 255, 102, 0.3) !important;
         transition: all 0.2s ease-in-out !important;
+        text-shadow: 0 0 5px rgba(0, 255, 102, 0.8) !important;
     }
+    
+    /* Hover dos botões com período registrado */
     div.btn-cal-neon button:hover,
     div.btn-cal-neon div[data-testid="stBaseButton-secondary"] button:hover {
-        background-color: rgba(57, 255, 20, 0.40) !important;
-        border-color: #39ff14 !important;
-        box-shadow: 0 0 35px rgba(57, 255, 20, 0.9) !important;
+        background-color: rgba(0, 255, 102, 0.45) !important;
+        border-color: #00ff66 !important;
+        box-shadow: 0 0 40px rgba(0, 255, 102, 0.9) !important;
         transform: scale(1.05) !important;
     }
 
-    /* 🔵 DIAS VAZIOS: Efeito Fosco Apagado em Segundo Plano */
+    /* 🔵 DIAS VAZIOS: Efeito Fosco em Segundo Plano (Apagados) */
     div.btn-cal-vazio button, 
     div.btn-cal-vazio div[data-testid="stBaseButton-secondary"] button,
     div.btn-cal-vazio button[data-testid="baseButton-secondary"] {
-        background-color: rgba(0, 150, 255, 0.02) !important;
+        background-color: rgba(255, 255, 255, 0.02) !important; /* Quase invisível */
         backdrop-filter: blur(4px) !important;
         -webkit-backdrop-filter: blur(4px) !important;
-        color: rgba(209, 230, 255, 0.35) !important;
-        border: 1px solid rgba(0, 150, 255, 0.12) !important;
+        color: rgba(240, 253, 244, 0.3) !important; /* Número fosco apagado */
+        border: 1px solid rgba(240, 253, 244, 0.1) !important; /* Borda muito sutil */
         border-radius: 8px !important;
         width: 100% !important;
         height: 75px !important;
@@ -117,12 +121,12 @@ st.markdown("""
         box-shadow: none !important;
         transition: all 0.2s ease-in-out !important;
     }
+    
     div.btn-cal-vazio button:hover,
     div.btn-cal-vazio div[data-testid="stBaseButton-secondary"] button:hover {
-        background-color: rgba(0, 150, 255, 0.12) !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
         color: #ffffff !important;
-        border-color: rgba(0, 204, 255, 0.5) !important;
-        box-shadow: 0 0 12px rgba(0, 204, 255, 0.2) !important;
+        border-color: rgba(0, 255, 102, 0.4) !important;
     }
     
     .caixa-dia-foco {
@@ -138,24 +142,27 @@ st.markdown("""
     }
     .card-metrica-topo {
         background-color: rgba(255, 255, 255, 0.02) !important;
-        border: 1px solid rgba(57, 255, 20, 0.2) !important;
+        border: 1px solid rgba(0, 255, 102, 0.2) !important;
         border-radius: 8px;
         padding: 14px;
         text-align: center;
     }
     div.stButton > button {
-        background-color: rgba(57, 255, 20, 0.05) !important;
-        color: #39ff14 !important;
-        border: 1px solid rgba(57, 255, 20, 0.4) !important;
+        background-color: rgba(0, 255, 102, 0.05) !important;
+        color: #00ff66 !important;
+        border: 1px solid rgba(0, 255, 102, 0.4) !important;
         border-radius: 8px !important;
         width: 100% !important;
     }
     div.stButton > button:hover {
-        background-color: rgba(57, 255, 20, 0.18) !important;
+        background-color: rgba(0, 255, 102, 0.18) !important;
         color: #ffffff !important;
     }
     </style>
 """, unsafe_allow_html=True)
+
+st.title("📅 Calendário Dinâmico de Aulas")
+st.markdown("Selecione os filtros na lateral. **Clique em qualquer dia do calendário** para carregar os dados diretamente no formulário abaixo.")
 
 excel_file = "Quantidade_de_Aulas_por_Dia_Novas_Disciplinas.xlsx"
 
@@ -251,13 +258,13 @@ st.markdown(f"""
             <td style='width:50%; border:none;'>
                 <div class='card-metrica-topo'>
                     <span style='font-size:14px; color:#a7f3d0;'>Total no Mês ({MESES_PT[mes]})</span><br>
-                    <span style='font-size:32px; font-weight:bold; color:#39ff14;'>{total_periodos_mes} pd</span>
+                    <span style='font-size:32px; font-weight:bold; color:#00ff66;'>{total_periodos_mes} pd</span>
                 </div>
             </td>
             <td style='width:50%; border:none;'>
                 <div class='card-metrica-topo'>
                     <span style='font-size:14px; color:#a7f3d0;'>Total no Ano ({ano})</span><br>
-                    <span style='font-size:32px; font-weight:bold; color:#39ff14;'>{total_periodos_ano} pd</span>
+                    <span style='font-size:32px; font-weight:bold; color:#00ff66;'>{total_periodos_ano} pd</span>
                 </div>
             </td>
         </tr>
@@ -332,7 +339,7 @@ if dia_escolhido is not None:
                         df_final_turma.to_excel(writer, sheet_name=nome_aba, index=False)
                     else:
                         pd.read_excel(excel_file, sheet_name=nome_aba).to_excel(writer, sheet_name=nome_aba, index=False)
-            st.success("✓ Registro updated!")
+            st.success("✓ Registro atualizado!")
             st.rerun()
             
     with col_b2:
