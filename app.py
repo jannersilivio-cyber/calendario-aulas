@@ -135,6 +135,8 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
 
+# Linha de segurança neutra marcando o encerramento da primeira metade
+sinalizador_divisao = "Parte 1 Finalizada"
 # --- ANTI-TRAVAMENTO DOS FILTROS ---
 if not os.path.exists(excel_file):
     try:
@@ -237,99 +239,113 @@ if not df_mes.empty:
 # --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
 cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
+
 html_calendario = """
-
-
-Seg
-Ter
-Qua
-Qui
-Sex
-Sáb
-Dom
-
-
+<div style="background-color:#040805; padding:5px; border-radius:12px; font-family:sans-serif;">
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Seg</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Ter</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qua</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qui</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sex</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sáb</div>
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Dom</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
 """
+
 for semana in semanas:
-for dia_num in semana:
-if dia_num == 0:
-html_calendario += ''
-else:
-if dia_num in aulas_por_dia:
-qtd_pds = aulas_por_dia[dia_num]
-html_calendario += f"""
+    for dia_num in semana:
+        if dia_num == 0:
+            html_calendario += '<div style="height: 75px;"></div>'
+        else:
+            if dia_num in aulas_por_dia:
+                qtd_pds = aulas_por_dia[dia_num]
+                html_calendario += f"""
+                <button onclick="Streamlit.setComponentValue({dia_num})"
+                    style="height: 75px; background-color: rgba(0, 255, 102, 0.25); border: 2px solid #00ff66;
+                    color: #ffffff; font-size: 19px; font-weight: 900; border-radius: 8px; cursor: pointer;
+                    box-shadow: 0 0 15px rgba(0, 255, 102, 0.5), inset 0 0 5px rgba(0, 255, 102, 0.2); transition: 0.2s;">
+                    {dia_num:02d}<br><span style="font-size: 13px; color: #00ff66; font-weight: bold;">{qtd_pds} pd</span>
+                </button>
+                """
+            else:
+                html_calendario += f"""
+                <button onclick="Streamlit.setComponentValue({dia_num})"
+                    style="height: 75px; background-color: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(240, 253, 244, 0.12) !important;
+                    color: rgba(240, 253, 244, 0.35) !important; font-size: 18px; font-weight: normal; border-radius: 8px; cursor: pointer; transition: 0.2s;">
+                    {dia_num:02d}
+                </button>
+                """
 
-{dia_num:02d}
-{qtd_pds} pd
-
-"""
-else:
-html_calendario += f"""
-
-{dia_num:02d}
-
-"""
 html_calendario += """
-
-
-
-const Streamlit = {
-setComponentValue: function(value) {
-window.parent.postMessage({
-type: 'streamlit:set_component_value',
-value: value
-}, '*');
-}
-};
-
+    </div>
+</div>
+<script>
+    const Streamlit = {
+        setComponentValue: function(value) {
+            window.parent.postMessage({
+                type: 'streamlit:set_component_value',
+                value: value
+            }, '*');
+        }
+    };
+</script>
 """
+
 resposta_iframe = st.components.v1.html(html_calendario, height=450, scrolling=False)
+
 if resposta_iframe:
-st.session_state.dia_selecionado = int(resposta_iframe)
+    st.session_state.dia_selecionado = int(resposta_iframe)
 
---- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
-
+# --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 st.write("---")
 dia_escolhido = st.session_state.dia_selecionado
+
 if dia_escolhido is not None:
-st.markdown(f"⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}", unsafe_allow_html=True)
-data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_escolhido}")
-registro_existente = df_mes[df_mes["Data"] == data_alvo]
-col_f1, col_f2 = st.columns(2)
-with col_f1:
-nova_disciplina = st.text_input("Disciplina do Lançamento", value=disciplina_selecionada)
-with col_f2:
-if coluna_quantidade in registro_existente.columns and not registro_existente.empty:
-periodos_sugeridos = int(registro_existente[coluna_quantidade].sum())
-else:
-periodos_sugeridos = int(len(registro_existente)) if not registro_existente.empty else 1
-num_periodos = st.number_input("Quantidade de Períodos", min_value=1, max_value=10, value=max(1, periodos_sugeridos))
-col_b1, col_b2 = st.columns(2)
-with col_b1:
-if st.button("💾 Salvar/Alterar Registro", key="btn_salvar_inf", use_container_width=True):
-df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
-novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
-df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
-with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-for nome_aba in turmas_disponiveis:
-if nome_aba == turma_selecionada:
-df_final_turma["Data"] = df_final_turma["Data"].dt.strftime('%Y-%m-%d')
-df_final_turma.to_excel(writer, sheet_name=nome_aba, index=False)
-else:
-df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
-if 'Data' in df_carregada_outra.columns:
-df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
-df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
-st.success("✓ Registro updated!")
-st.rerun()
-with col_b2:
-if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf", use_container_width=True):
-df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
-with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-for nome_aba in turmas_disponiveis:
-if nome_aba == turma_selecionada:
-df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
-df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
+    st.markdown(f"<div class='caixa-dia-foco'>⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}</div>", unsafe_allow_html=True)
+    data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_escolhido}")
+    registro_existente = df_mes[df_mes["Data"] == data_alvo]
+    
+    col_f1, col_f2 = st.columns(2)
+    with col_f1:
+        nova_disciplina = st.text_input("Disciplina do Lançamento", value=disciplina_selecionada)
+    with col_f2:
+        if coluna_quantidade in registro_existente.columns and not registro_existente.empty:
+            periodos_sugeridos = int(registro_existente[coluna_quantidade].sum())
+        else:
+            periodos_sugeridos = int(len(registro_existente)) if not registro_existente.empty else 1
+        num_periodos = st.number_input("Quantidade de Períodos", min_value=1, max_value=10, value=max(1, periodos_sugeridos))
+        
+    col_b1, col_b2 = st.columns(2)
+    with col_b1:
+        if st.button("💾 Salvar/Alterar Registro", key="btn_salvar_inf", use_container_width=True):
+            df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
+            
+            novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
+            df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
+            
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                for nome_aba in turmas_disponiveis:
+                    if nome_aba == turma_selecionada:
+                        df_final_turma["Data"] = df_final_turma["Data"].dt.strftime('%Y-%m-%d')
+                        df_final_turma.to_excel(writer, sheet_name=nome_aba, index=False)
+                    else:
+                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+                        if 'Data' in df_carregada_outra.columns:
+                            df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
+                        df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+            st.success("✓ Registro atualizado!")
+            st.rerun()
+            
+    with col_b2:
+        if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf", use_container_width=True):
+            df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                for nome_aba in turmas_disponiveis:
+                    if nome_aba == turma_selecionada:
+                        df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
+                        df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
 else:
 df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
 if 'Data' in df_carregada_outra.columns:
