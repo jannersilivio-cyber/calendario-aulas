@@ -265,7 +265,7 @@ cal = calendar.Calendar(firstweekday=6)
 semanas = cal.monthdayscalendar(ano, mes)
 
 html_calendario = """
-<div style="background-color:#040805; padding:5px; border-radius:12px; font-family:sans-serif;">
+<div style="background-color:#040805; padding: 5px 5px 15px 5px; border-radius:12px; font-family:sans-serif;">
     <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Dom</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Seg</div>
@@ -310,8 +310,9 @@ html_calendario += """
 </div>
 """
 
-# Renderiza a grade do seu calendário na tela
-st.components.v1.html(html_calendario, height=450, scrolling=False)
+# Calcula a altura dinamicamente (seja um mês de 4, 5 ou 6 semanas) para nunca cortar a última linha
+altura_calendario = (len(semanas) * 88) + 60
+st.components.v1.html(html_calendario, height=altura_calendario, scrolling=False)
 
 # Captura de forma estável o clique que veio do botão através da URL
 if "dia" in st.query_params:
