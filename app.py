@@ -314,13 +314,13 @@ function selecionarDia(dia) {
 </script>
 <div style="background-color:#040805; padding: 5px 5px 15px 5px; border-radius:12px; font-family:sans-serif;">
     <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
-        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Dom</div>
+        <div style="color:#ff4d6d; text-shadow: 0 0 8px rgba(255, 77, 109, 0.45); font-weight:bold; font-size:14px;">Dom</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Seg</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Ter</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qua</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qui</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sex</div>
-        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sáb</div>
+        <div style="color:#38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.45); font-weight:bold; font-size:14px;">Sáb</div>
     </div>
     <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
 """
