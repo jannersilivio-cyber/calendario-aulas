@@ -96,6 +96,25 @@ st.markdown("""
         border: 1px solid rgba(0, 255, 102, 0.2) !important;
         border-radius: 8px; padding: 14px; text-align: center;
     }
+
+    /* Oculta completamente os gatilhos internos de comunicação de clique */
+    [class*="st-key-gatilho_dia_"],
+    div[data-testid="stElementContainer"]:has(#ancora-gatilhos-ocultos),
+    div[data-testid="stElementContainer"]:has(#ancora-gatilhos-ocultos) + div,
+    div.element-container:has(#ancora-gatilhos-ocultos),
+    div.element-container:has(#ancora-gatilhos-ocultos) + div {
+        height: 0px !important;
+        min-height: 0px !important;
+        max-height: 0px !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        margin: 0px !important;
+        padding: 0px !important;
+        pointer-events: none !important;
+        position: fixed !important;
+        top: -9999px !important;
+        left: -9999px !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -265,6 +284,23 @@ cal = calendar.Calendar(firstweekday=6)
 semanas = cal.monthdayscalendar(ano, mes)
 
 html_calendario = """
+<script>
+function selecionarDia(dia) {
+    const doc = window.parent.document;
+    const btnPorKey = doc.querySelector('.st-key-gatilho_dia_' + dia + ' button');
+    if (btnPorKey) {
+        btnPorKey.click();
+        return;
+    }
+    const botoes = doc.querySelectorAll('button');
+    for (const btn of botoes) {
+        if (btn.textContent && btn.textContent.trim() === 'SEL_DIA_' + dia) {
+            btn.click();
+            return;
+        }
+    }
+}
+</script>
 <div style="background-color:#040805; padding: 5px 5px 15px 5px; border-radius:12px; font-family:sans-serif;">
     <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Dom</div>
@@ -283,8 +319,7 @@ for semana in semanas:
         if dia_num == 0:
             html_calendario += '<div style="height: 75px;"></div>'
         else:
-            # JavaScript atualizado para atualizar os parâmetros da URL principal de forma estável
-            js_clique = f"window.top.location.href = window.top.location.origin + window.top.location.pathname + '?dia={dia_num}';"
+            js_clique = f"selecionarDia({dia_num});"
             
             if dia_num in aulas_por_dia:
                 qtd_pds = aulas_por_dia[dia_num]
@@ -310,13 +345,19 @@ html_calendario += """
 </div>
 """
 
-# Calcula a altura dinamicamente (seja um mês de 4, 5 ou 6 semanas) para nunca cortar a última linha
+# Calcula a altura dinamicamente para nunca cortar a última linha
 altura_calendario = (len(semanas) * 88) + 60
 st.components.v1.html(html_calendario, height=altura_calendario, scrolling=False)
 
-# Captura de forma estável o clique que veio do botão através da URL
-if "dia" in st.query_params:
-    st.session_state.dia_selecionado = int(st.query_params["dia"])
+# Gatilhos invisíveis do Streamlit acionados pelo clique nos botões HTML acima
+st.markdown('<div id="ancora-gatilhos-ocultos"></div>', unsafe_allow_html=True)
+with st.container():
+    _, ultimo_dia_mes = calendar.monthrange(ano, mes)
+    cols_ocultas = st.columns(7)
+    for d in range(1, ultimo_dia_mes + 1):
+        with cols_ocultas[(d - 1) % 7]:
+            if st.button(f"SEL_DIA_{d}", key=f"gatilho_dia_{d}"):
+                st.session_state.dia_selecionado = d
 
 # --- FORMULÁRIO DE LANÇAMENTO INFERIOR ---
 
@@ -324,7 +365,7 @@ st.write("---")
 dia_escolhido = st.session_state.dia_selecionado
 if dia_escolhido is not None:
     st.markdown(f"⚡ Dia Selecionado para Gerenciamento: {dia_escolhido:02d}/{mes:02d}/{ano}", unsafe_allow_html=True)
-    data_alvo = pd.to_datetime(f"{ano}-{mes}-{dia_escolhido}")
+    data_alvo = pd.to_datetime(f"{ano}-{mes:02d}-{dia_escolhido:02d}")
     registro_existente = df_mes[df_mes["Data"] == data_alvo]
     col_f1, col_f2 = st.columns(2)
     with col_f1:
@@ -352,8 +393,6 @@ if dia_escolhido is not None:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
             
-            # Limpa o parâmetro da URL após salvar para resetar o estado de forma limpa
-            st.query_params.clear()
             st.success("✓ Registro atualizado!")
             st.rerun()
     with col_b2:
@@ -369,7 +408,6 @@ if dia_escolhido is not None:
                         if 'Data' in df_carregada_outra.columns:
                             df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
                         df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
-            st.query_params.clear()
             st.session_state.dia_selecionado = None
             st.rerun()
 else:
