@@ -126,7 +126,7 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
     if arquivo_updated is not None:
         try:
             abas_finais = {}
-            if os.path.exists(excel_file):
+            if os.path.exists(excel_file) and os.path.getsize(excel_file) > 0:
                 try:
                     xls_antigo = pd.ExcelFile(excel_file)
                     for nome_aba in xls_antigo.sheet_names:
@@ -160,25 +160,36 @@ with st.expander("📂 Clique aqui para ADICIONAR novas aulas dadas à tabela ex
                     else:
                         abas_finais[nome_aba] = df_nova_aba
 
-            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-                for nome_aba, df_gravar in abas_finais.items():
-                    df_gravar['Data'] = pd.to_datetime(df_gravar['Data'], errors='coerce')
-                    df_gravar = df_gravar.dropna(subset=['Data'])
-                    
-                    col_quant = next((c for c in df_gravar.columns if 'quant' in c.lower()), 'Quantidade')
-                    if col_quant in df_gravar.columns:
-                        df_gravar[col_quant] = pd.to_numeric(df_gravar[col_quant], errors='coerce').fillna(1)
-                        df_gravar = df_gravar.groupby(['Data', 'Disciplina'], as_index=False).agg({col_quant: 'sum'})
-                    
-                    df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
-                    df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
-                    
-            st.success("✓ Dados consolidados de forma limpa!")
-            st.rerun()
+            if abas_finais:
+                with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                    for nome_aba, df_gravar in abas_finais.items():
+                        df_gravar['Data'] = pd.to_datetime(df_gravar['Data'], errors='coerce')
+                        df_gravar = df_gravar.dropna(subset=['Data'])
+                        
+                        col_quant = next((c for c in df_gravar.columns if 'quant' in c.lower()), 'Quantidade')
+                        if col_quant in df_gravar.columns:
+                            df_gravar[col_quant] = pd.to_numeric(df_gravar[col_quant], errors='coerce').fillna(1)
+                            df_gravar = df_gravar.groupby(['Data', 'Disciplina'], as_index=False).agg({col_quant: 'sum'})
+                        
+                        df_gravar['Data'] = df_gravar['Data'].dt.strftime('%Y-%m-%d')
+                        df_gravar.to_excel(writer, sheet_name=nome_aba, index=False)
+                        
+                st.success("✓ Dados consolidados de forma limpa!")
+                st.rerun()
         except Exception as e:
             st.error(f"Erro ao salvar arquivo: {e}")
 
-if not os.path.exists(excel_file):
+# Verifica se o arquivo existe e é válido (recupera automaticamente caso tenha sido corrompido)
+arquivo_valido = False
+if os.path.exists(excel_file) and os.path.getsize(excel_file) > 0:
+    try:
+        xls_teste = pd.ExcelFile(excel_file)
+        if len(xls_teste.sheet_names) > 0:
+            arquivo_valido = True
+    except:
+        arquivo_valido = False
+
+if not arquivo_valido:
     try:
         with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
             df_inicial = pd.DataFrame([{"Data": "2026-10-19", "Disciplina": "Biologia", "Quantidade": 2}])
@@ -382,32 +393,48 @@ if dia_escolhido is not None:
             df_limpo = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == nova_disciplina))]
             novas_linhas = [{"Data": data_alvo, "Disciplina": nova_disciplina, coluna_quantidade: num_periodos}]
             df_final_turma = pd.concat([df_limpo, pd.DataFrame(novas_linhas)], ignore_index=True)
+
+            # Carrega todas as abas na memória ANTES de abrir o ExcelWriter para não truncar o arquivo durante a leitura
+            abas_para_salvar = {}
+            for nome_aba in turmas_disponiveis:
+                if nome_aba == turma_selecionada:
+                    df_salvar = df_final_turma.copy()
+                    df_salvar["Data"] = pd.to_datetime(df_salvar["Data"], errors='coerce').dt.strftime('%Y-%m-%d')
+                    abas_para_salvar[nome_aba] = df_salvar
+                else:
+                    df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+                    if 'Data' in df_carregada_outra.columns:
+                        df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
+                    abas_para_salvar[nome_aba] = df_carregada_outra
+
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-                for nome_aba in turmas_disponiveis:
-                    if nome_aba == turma_selecionada:
-                        df_final_turma["Data"] = df_final_turma["Data"].dt.strftime('%Y-%m-%d')
-                        df_final_turma.to_excel(writer, sheet_name=nome_aba, index=False)
-                    else:
-                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
-                        if 'Data' in df_carregada_outra.columns:
-                            df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
-                        df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+                for nome_aba, df_aba in abas_para_salvar.items():
+                    df_aba.to_excel(writer, sheet_name=nome_aba, index=False)
             
             st.success("✓ Registro atualizado!")
             st.rerun()
     with col_b2:
         if st.button("🗑️ Deletar Aula do Calendário", key="btn_deletar_inf", use_container_width=True):
             df_restante = df_turma[~((df_turma["Data"] == data_alvo) & (df_turma["Disciplina"] == disciplina_selecionada))]
+
+            # Carrega todas as abas na memória ANTES de abrir o ExcelWriter
+            abas_para_salvar = {}
+            for nome_aba in turmas_disponiveis:
+                if nome_aba == turma_selecionada:
+                    df_salvar = df_restante.copy()
+                    if not df_salvar.empty and 'Data' in df_salvar.columns:
+                        df_salvar["Data"] = pd.to_datetime(df_salvar["Data"], errors='coerce').dt.strftime('%Y-%m-%d')
+                    abas_para_salvar[nome_aba] = df_salvar
+                else:
+                    df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
+                    if 'Data' in df_carregada_outra.columns:
+                        df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
+                    abas_para_salvar[nome_aba] = df_carregada_outra
+
             with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-                for nome_aba in turmas_disponiveis:
-                    if nome_aba == turma_selecionada:
-                        df_restante["Data"] = df_restante["Data"].dt.strftime('%Y-%m-%d')
-                        df_restante.to_excel(writer, sheet_name=nome_aba, index=False)
-                    else:
-                        df_carregada_outra = pd.read_excel(excel_file, sheet_name=nome_aba)
-                        if 'Data' in df_carregada_outra.columns:
-                            df_carregada_outra['Data'] = pd.to_datetime(df_carregada_outra['Data'], errors='coerce').dt.strftime('%Y-%m-%d')
-                        df_carregada_outra.to_excel(writer, sheet_name=nome_aba, index=False)
+                for nome_aba, df_aba in abas_para_salvar.items():
+                    df_aba.to_excel(writer, sheet_name=nome_aba, index=False)
+
             st.session_state.dia_selecionado = None
             st.rerun()
 else:
