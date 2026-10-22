@@ -1,11 +1,3 @@
-Para fazer a semana começar no domingo (alterando a ordem atual que inicia na segunda-feira e termina no domingo), basta realizar dois ajustes na seção de construção da grade do calendário:
-
-1. **No módulo `calendar` do Python:** alterar `cal = calendar.Calendar(firstweekday=0)` para `cal = calendar.Calendar(firstweekday=6)` (no Python, `0` representa segunda-feira e `6` representa domingo).
-2. **No cabeçalho HTML:** mover a coluna `Dom` do final para a primeira posição, antes de `Seg`.
-
-Abaixo está o código completo já com essa alteração aplicada:
-
-```python
 import calendar
 from datetime import datetime
 import os
