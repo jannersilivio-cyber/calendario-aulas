@@ -1,3 +1,11 @@
+Para fazer a semana começar no domingo (alterando a ordem atual que inicia na segunda-feira e termina no domingo), basta realizar dois ajustes na seção de construção da grade do calendário:
+
+1. **No módulo `calendar` do Python:** alterar `cal = calendar.Calendar(firstweekday=0)` para `cal = calendar.Calendar(firstweekday=6)` (no Python, `0` representa segunda-feira e `6` representa domingo).
+2. **No cabeçalho HTML:** mover a coluna `Dom` do final para a primeira posição, antes de `Seg`.
+
+Abaixo está o código completo já com essa alteração aplicada:
+
+```python
 import calendar
 from datetime import datetime
 import os
@@ -260,19 +268,20 @@ if not df_mes.empty:
 
 # --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
 
-cal = calendar.Calendar(firstweekday=0)
+# firstweekday=6 define o Domingo como o primeiro dia da semana
+cal = calendar.Calendar(firstweekday=6)
 semanas = cal.monthdayscalendar(ano, mes)
 
 html_calendario = """
 <div style="background-color:#040805; padding:5px; border-radius:12px; font-family:sans-serif;">
     <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; margin-bottom: 12px;">
+        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Dom</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Seg</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Ter</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qua</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Qui</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sex</div>
         <div style="color:#00ff66; font-weight:bold; font-size:14px;">Sáb</div>
-        <div style="color:#00ff66; font-weight:bold; font-size:14px;">Dom</div>
     </div>
     <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
 """
@@ -372,3 +381,5 @@ if dia_escolhido is not None:
             st.rerun()
 else:
     st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
+
+```
