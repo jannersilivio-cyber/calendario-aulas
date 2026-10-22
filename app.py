@@ -260,7 +260,7 @@ if not df_mes.empty:
 
 # --- CONSTRUÇÃO DA GRADE DO CALENDÁRIO EMBUTIDO (HTML + JS INTEGRADOR) ---
 
-cal = calendar.Calendar(firstweekday=1)
+cal = calendar.Calendar(firstweekday=0)
 semanas = cal.monthdayscalendar(ano, mes)
 
 html_calendario = """
