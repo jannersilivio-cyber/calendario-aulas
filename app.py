@@ -373,5 +373,3 @@ if dia_escolhido is not None:
             st.rerun()
 else:
     st.info("💡 Clique em qualquer botão de dia na grade do calendário acima para gerenciar os dados.")
-
-```
